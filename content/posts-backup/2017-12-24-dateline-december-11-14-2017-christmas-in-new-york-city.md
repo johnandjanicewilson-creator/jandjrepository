@@ -1,0 +1,68 @@
+---
+title: "Dateline December 11-14, 2017 - Christmas in New York City"
+date: "2017-12-24"
+dateline: "2017-12-11"
+excerpt: " Arriving in New York City With the Christmas season upon us we decided that a trip to New York City was in order. We he..."
+destination: "2017 Travel"
+region: "World"
+year: 2017
+categories:
+  - "2017 Travel"
+tags:
+  - "9/11 memorial"
+  - "federal hall"
+  - "fraunces tavern"
+  - "New York City"
+  - "new york stock exchange"
+  - "Radio City Mudic Hall"
+  - "Rockefeller Center"
+  - "saint patricks cathedral"
+  - "saks fifth avenue"
+  - "trinity church"
+featuredImage: "/images/2017/tree.jpg"
+featured_image: "/images/2017/tree.jpg"
+featuredImageAlt: "Dateline December 11-14, 2017 - Christmas in New York City"
+---
+![](/images/2017/tree.jpg)
+
+##### Arriving in New York City
+
+With the Christmas season upon us we decided that a trip to New York City was in order.  We headed north with Janice's brother Stephen and wife Marilyn. It had been some time since we had visited the city and we were excited to be back at Christmas time to see Rockefeller Center, St Patrick's Cathedral and more. We  arrived into New York on the day the![](/images/2017/police.jpg) bomb went off near Port Authority.  The amazing thing about the wonderful people in New York, there was no panic and nothing but confidence in the New York City Police Department.  We mentioned to each other that the next several days would probably be as safe to be in New York, that you could have. We hopped a cab into the "City". Having enjoyed staying at Airbnb's in Europe and our own experience as super hosts (We rent our pool house on Airbnb),  we rented an Airbnb apartment on  9th Avenue between 51st and 52nd Street in what was formally called "Hell's Kitchen" and historically where the musical "West Side Story" was written and took place. We arrived a bit early but there was a restaurant below the apartment called the Distillery.  They had burgers with fries and a soda for $10!, In NYC,, amazing, a $10 lunch! The burgers were huge and excellent as were the fries, a great place for lunch. We finally got the text that we could check in. The place was a great 2 bedroom apartment with 2 baths, kitchen and TV room,  perfect for the four of us.
+
+##### Off to Adventure
+
+With our plans for a trip to South America in February we needed to get visas for Brazil, so off we went to their consulate to complete the process.  The consulate was over near the United Nations so we were able to walk back through Grand Central Station and up Park Avenue to meet Steve and Marilyn at Saint Patrick's Cathedral. Both of us had worked in New York, John for 20 years and Janice off and on for the same number of years.  The chance to return to the “City” as retired vacationers is such a different experience.  Not being on "working, New York Time" heading to the next meeting or having to catch the next train to the suburbs, gave us a chance to take in the wonderful sights. \[gallery columns="2" size="medium" ids="5550,5549"\] As we walked through Grand Central, it was rush hour, we were able to enjoy the splendor of one of the most beautiful train stations in the world.  We then took the escalator up to the Met Life building. (It will always be the Pan Am Building to us).   Janice’s first job was in the building programming the routes and schedules for Pan Am Airlines, her offices were near the top of the building.
+
+##### Saint Patricks Cathedral
+
+![](/images/2017/st-pats.jpg) We walked up Park Avenue to 50th street and then across to 5th Avenue and Saint Patrick's Cathedral.  The restoration of the church was magnificent both inside and out. ![](/images/2017/stpat.jpg) As we toured the cathedral we visited the Lady chapel or Mary chapel where John’s brother Will and his wife Cathy were married.  It happened to be their anniversary so we sent them a picture of the renovated chapel. ![](/images/2017/chapel.jpg) There was a beautiful Nativity creche.  If you look close you will find the model of Cardinal Timothy Dolan’s golden retriever which has given many of New Yorker's a life for the wonderful sense of humor of the cardinal. ![](/images/2017/manger.jpg)
+
+##### Rockefeller Center Christmas Tree
+
+It was on to Rockefeller Center, across the street, but first the sensational light show on the front of Sak's Fifth Avenue.  Click on the video to get a taste, it is great. ![](/images/2017/characters.jpg)New York characters bound for having your picture taken with them for a tip, they are all over the city, not sure the “Naked Cowboy” is still around, but then it was pretty cold! ![](/images/2017/tree.jpg)Then we came upon the view of the famous Rockefeller Christmas Tree through the Channel Gardens along with the skating rink.  Nothing shows New York Christmas outdoors like Rockefeller Center. A wonderful evening with the Christmas and Holiday cheer of New York City
+
+##### The 9/11 Memorial
+
+Tuesday we left the apartment shortly after rush hour on the subways and headed over to 8th Ave and 50th Street to catch the E-train down to the World Trade Center. \[gallery size="medium" columns="2" ids="5565,5560"\] This was the first time Steve and Marilyn had been on a subway in New York, if you haven't been it is an Experience! Janice had not been downtown since 9-11. She had left the world trade center on the September  7th with plans to fly  Monday, the 10th for for a Tuesday morning (9/11) meetings on the 25th floor of the South Building with various customer banks in the Sun Microsystems conference room. The meeting was cancelled on Saturday so she stayed home.![](/images/2017/wtc.jpg) Janice still has her World Trade Center identification badge for access to the Sun offices.
+
+##### 9/11
+
+Tuesday morning John was on the phone with his sisters husband Parker who also worked in the World Trade Center office of Sun Microsystems.  They were just talking because Parker had a dental appointment and wasn't going into the office until after lunch.  Parker was watching the TV at home when it was reported that a small plane hit the World Trade Center, so we got off the phone and turned on the TV  and watched the replay of the plane crashing into the first building then the second plane crashing into the second tower.
+
+##### Visiting the 9/11 Memorial
+
+We arrived by the subway near the memorial and found ourselves turned around, We both new that area like the back of our hand before 9/11 and it looked nothing like before.  We were at Fulton Street in front of the new Freedom Tower.  We grabbed some coffee and a sandwich for breakfast while we waited for our reserved time for the memorial. The 9/11 memorial tells the  story on so many levels.  The tragedy of those that lost their lives and about their families.  As you walk through the original foundations deep inside the memorial, ![](/images/2017/foundation-best.jpg)  there is a wall with all those that lost their lives, over the speakers you hear the voices of their family members reciting their names, just writing about that part of the memorial still gives you chills and takes you back to that day.  The story of the first responders, many that gave their lives to save as many people as they could by going into the buildings and eventually having them crash around them. This firetruck got their just before the collapse and all the 11 firefighters perished.![](/images/2017/UNADJUSTEDNONRAW_thumb_2408.jpg) There are a number of videos that have been made and can only be seen within the memorial that tell the story.  One starts with the procession of the first responders that loss their lives as the many fire fighters and police officers pay tribute to their lost comrades.  It is very emotional.  The film then takes you through the building of the memorial and the Freedom Tower. Walking through the memorial is incredible.  You go down to the original foundations of both the North and South Towers.  One wall is actually the Hudson River, ![](/images/2017/UNADJUSTEDNONRAW_thumb_240b-2.jpg)which did not collapse because all the debris that came down with the buildings supported the wall, although there were a few cracks.  There is much memorbelia from the towers that were found in the excavation, including first response firetrucks and emergency vehicles with tributes to the men and women that sacrificed to save people before, during and after the collapse. The story as you walk through the rooms is remarkable, sad and at the same time full of hope. No one should miss seeing this museum. After leaving the 9/11 Memorial we headed over to Wall Street, visiting Trinity Church along the way.  The grave yard ![](/images/2017/trinity-cemetery.jpg)next to the church is where many famous Americans were buried including Alexander Hamilton upon his death from the dual with Aaron Burr. We walked down to the New York Stock Exchange ![](/images/2017/steve-stock.jpg)to Broad Street and Wall where the original Morgan Bank building still stands across from Federal Hall.  Federal Hall was where George Washington took the oath of office, it housed our congress and the supreme court  until moved to Washington D.C.  That is some intersection. ![](/images/2017/Unknown.jpg)Time for lunch and to stay with history, we walked down Broad Street several blocks to Fraunces Tavern. It is believed to be the oldest building in New York City.  Leading up to the Revolutionary War it was the meeting places for the secret society, The Sons of Liberty.  At the end of the Revolutionary War, George Washington bid farewell to his officers that had served him during the war.
+
+##### Dining In New York City
+
+We had the pleasure of eating at several great neighborhood restraints on the west side in Hells Kitchen, each had good food at very reasonable prices.  Having spent many years entertaining in New York City on expense account, money didn't seem to matter!  Being retired and on your own dime, it was a pleasure to find so many moderate priced restaurants with great service and food. It is estamatedr that there are over 8,000 restaurants in NYC, there is a lot choice!!
+
+##### Radio City Music Hall
+
+Christmas in New York must include the Christmas Spectacular with the Rockets at Radio City Music Hall.  But you need to have the warm up act. Marilyn wanted to go to the Stardust Diner at 51st and Broadway for a late breakfast.  The line to get in takes about 15 minutes, but worth the wait. \[gallery ids="5631,5630,5628"\] The wait staff is made up of potential Broadway bound entertainers that sing continually while you enjoy this 50’s style diner.  The food was good, but the staff made the experience fantastic.  We have to admit, our years in NYC make us a little jaded about “tourist” traps.  This is a wonderful stop when you are in New York. The Christmas Spectacular is as traditional a New York City Christmas event as you can get.  We did the 11:30 show and it was everything we expected and more.  The Rockets are truly talented and what a show they put on.  There were many Santa Christmas acts and the final act is a wonderful rendition of the birth of Jesus Christ.  They march in live animal including a camel.  We recorded some of it but here is a video of it from YouTube You leave the show with the high spirit of the Christmas season.  Just a fantastic time was had by the four of us. We walked out of Radio City and over to Fifth Avenue to walk down to the NYC Public Library, one of the great old New York buildings.  Behind the Library is Bryant Park.  It used to be “needle city” with nothing but homeless and drug dealing.  In 1980 an organization was created to re-develop the park and in 1988 the park was closed for four years for the re=development.  It is now one of the highlights of midtown Manhattan.  It is a great neighborhood park with restraints, art stands, food stands and an ice skating rink.  The park is all decked out for the Christmas Season.![](/images/2017/Bryant-Park.jpg) A trip to a Kosher Deli is a must so we went to Ben’s Kosher Deli on 38th street in the Garment District.  Pastrami and great food.  One of the best in New York City. Our last evening we had cocktails in a local neighborhood bar and met an old family friends Patti Milton.  She had been so kind to John's daughter Kieran when she was working in New York City.  We had a great dinner, discussing old times, it was the first time Janice had met Patti, although we had tried many times over the years.  Patti is a reporter for CBS News and a producer on 60 Minutes, so it was very interesting to hear how the news is organized each morning  and how reporters validate their stories.  We had a great time and look forward to seeing her again.
+
+![Patti Milton, John and Janice](/images/2017/fullsizeoutput_36f.jpeg)
+
+The last morning arrived and it was time to visit the bagel shop for take home!  There is nothing like a New York bagel!! Steve and Janice headed out in the snow to pick up the bagels, fabulous morning in New York City. ![](/images/2017/steve-bagels.jpg)After bagels for breakfast we hailed a cab to take us to the airport for the trip home. Of course flying can be a PITA as it was on Thursday. First flight late missed connections in Atlanta. Janice got on the phone since she has status and found we were rescheduled for a later flight but Steve and Marilyn were scheduled for the next day. Quick action stand by list good news they got the last 2 seats on the flight, home by midnight to sleep in our own beds. Another great trip short but the memories will last forever. **A very Merry Christmas and Happy New Year to friends and family** Pictures by Janice Wilson and Marilyn Roberts
+
+

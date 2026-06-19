@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf7f2;
+  --foreground: #2c2a26;
+  --muted: #6b6560;
+  --accent: #c4775a;
+  --accent-dark: #a85f44;
+  --sage: #2d5a4a;
+  --sage-light: #e8f0ec;
+  --cream: #f5efe6;
+  --border: #e5ddd3;
+  --card: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-sage: var(--sage);
+  --color-sage-light: var(--sage-light);
+  --color-cream: var(--cream);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --font-sans: var(--font-source-sans);
+  --font-display: var(--font-cormorant);
+  --font-logo-serif: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-logo-script: var(--font-thesignature), cursive;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+}
+
+/* Logo script line — thesignature has no bold variant; stroke adds visual weight */
+.site-logo-script {
+  font-weight: 700;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
+  text-shadow:
+    0.4px 0 0 currentColor,
+    -0.4px 0 0 currentColor;
+}
+
+/* Blog post layout: centered 1100px column */
+article.blog-post {
+  width: 100%;
+}
+
+.post-content-area {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+
+.prose-travel {
+  width: 100%;
+  max-width: 100%;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: var(--foreground);
+}
+
+.prose-travel h2,
+.prose-travel h3 {
+  font-family: var(--font-cormorant), Georgia, serif;
+  color: var(--sage);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose-travel h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.prose-travel h3 {
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.prose-travel p {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.prose-travel a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose-travel a:hover {
+  color: var(--accent-dark);
+}
+
+.prose-travel ul,
+.prose-travel ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.prose-travel li {
+  margin-bottom: 0.5rem;
+}
+
+.prose-travel blockquote {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Images: capped width, centered, breathing room from text */
+.prose-travel img {
+  display: block;
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  margin: 2rem auto;
+  border-radius: 0.75rem;
+}
+
+.prose-travel p > a:has(img) {
+  display: block;
+  width: fit-content;
+  max-width: 800px;
+  margin: 2rem auto;
+}
+
+.prose-travel p > a:has(img) img {
+  margin: 0;
+}
+
+.prose-travel p:has(> img) img {
+  margin: 2rem auto;
+}
+
+/* Standalone image blocks (unwrapped from empty <p> tags) */
+.prose-travel .post-media {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.prose-travel .post-media img {
+  margin: 0 auto;
+}
+
+.prose-travel .post-media:has(+ .post-caption) img,
+.prose-travel .post-media:has(+ p.post-caption) img {
+  margin-bottom: 0.5rem;
+}
+
+.prose-travel .post-media a {
+  display: inline-block;
+  max-width: 800px;
+}
+
+.prose-travel figure {
+  margin: 2rem auto;
+  max-width: 800px;
+  text-align: center;
+}
+
+.prose-travel figure img {
+  margin: 0 auto;
+}
+
+.prose-travel figcaption {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.9em;
+  line-height: 1.5;
+  font-style: italic;
+  color: #666;
+}
+
+/* Image captions (markdown *caption* below images) */
+.prose-travel .post-caption,
+.prose-travel .post-media + p:has(> em:only-child),
+.prose-travel figure + p:has(> em:only-child) {
+  max-width: 800px;
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  font-size: 0.9em;
+  font-style: italic;
+  line-height: 1.5;
+  color: #666;
+}
+
+.prose-travel .post-caption em,
+.prose-travel .post-media + p:has(> em:only-child) em,
+.prose-travel figure + p:has(> em:only-child) em {
+  font-style: italic;
+  color: inherit;
+}
+
+.prose-travel strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
