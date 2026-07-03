@@ -8,7 +8,7 @@ function MdxImage(props: ImageProps) {
   if (!src || typeof src !== "string") return null;
 
   const altText = alt ?? "";
-  const showCaption = typeof alt === "string" && alt.includes(" ");
+  const showCaption = false;
 
   const image = (
     <Image

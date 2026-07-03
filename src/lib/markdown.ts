@@ -43,7 +43,7 @@ function altFromImgTag(imgTag: string): string {
 }
 
 function shouldShowCaption(alt: string): boolean {
-  return alt.includes(" ");
+  return false;
 }
 
 /** Wrap standalone images with multi-word alt in figure/figcaption (matches MdxImage). */
