@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { SITE } from "@/lib/constants";
 
 const CLOUD = "https://res.cloudinary.com/dsru5pryd/image/upload/f_auto,q_auto/images/hero";
@@ -16,7 +19,13 @@ const HERO_IMAGES = [
 ];
 
 export function Hero() {
-  const hero = HERO_IMAGES[Math.floor(Math.random() * HERO_IMAGES.length)];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    setIndex(Math.floor(Math.random() * HERO_IMAGES.length));
+  }, []);
+
+  const hero = HERO_IMAGES[index];
 
   return (
     <section className="relative w-full aspect-[16/9] overflow-hidden">
