@@ -8,7 +8,7 @@ region: "World"
 year: 2016
 categories:
   - "2016 Travel"
-  - "Cruising"
+  - "Cruise"
   - "Europe"
 tags:
   - "cruising"

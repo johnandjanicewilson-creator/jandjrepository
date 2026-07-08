@@ -8,7 +8,7 @@ region: "World"
 year: 2022
 categories:
   - "2022 Travel"
-  - "Cruising"
+  - "Cruise"
 tags:
   - "12 Metre Regatta"
   - "Crusing"

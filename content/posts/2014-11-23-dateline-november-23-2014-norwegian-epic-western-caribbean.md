@@ -12,7 +12,7 @@ categories:
   - "Mexico"
   - "Jamaica"
   - "2014 Travel"
-  - "Cruises"
+  - "Cruise"
 tags:
   - "caribbean"
   - "norwegian-cruise-line"
