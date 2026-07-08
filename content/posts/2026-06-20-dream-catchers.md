@@ -22,8 +22,8 @@ tags:
 places:
   - "Williamsburg, Virginia"
   - "Toano, Virginia"
-featuredImage: "/images/2026/dreamcatchers-kathy-eddie-janice-john.jpg"
-featured_image: "/images/2026/dreamcatchers-kathy-eddie-janice-john.jpg"
+featuredImage: "https://res.cloudinary.com/dsru5pryd/image/upload/f_auto,q_auto/images/2026/dreamcatchers-kathy-eddie-janice-john.jpg"
+featured_image: "https://res.cloudinary.com/dsru5pryd/image/upload/f_auto,q_auto/images/2026/dreamcatchers-kathy-eddie-janice-john.jpg"
 featuredImageAlt: "Kathy, Eddie, Janice, and John at Dream Catchers"
 ---
 
@@ -35,11 +35,11 @@ We pulled in around one o'clock and sat a good while, catching up on both famili
 
 **Dream Catchers.**
 
-![Eddie and Kathy Luzzi at the Dream Catchers welcome sign](/images/2026/dreamcatchers-eddie-kathy-sign.png)
+![Eddie and Kathy Luzzi at the Dream Catchers welcome sign](https://res.cloudinary.com/dsru5pryd/image/upload/f_auto,q_auto/images/2026/dreamcatchers-eddie-kathy-sign.png)
 
 It is a short drive from Williamsburg out to Toano, Virginia. The mission there is to help the people who need it most, folks with special needs, at-risk young people, and veterans, through therapy and learning carried out alongside the horses. The place is beautiful, the barns clean and well kept, tended mostly by volunteers, with a manager and a few experienced full-time hands. Many of the horses are on loan or have been donated to the program.
 
-![Gameboy, a Canadian Sport Horse on loan to Dream Catchers from Mary Millhiser and sponsored by Ben Benabise](/images/2026/dreamcatchers-gameboy.jpg)
+![Gameboy, a Canadian Sport Horse on loan to Dream Catchers from Mary Millhiser and sponsored by Ben Benabise](https://res.cloudinary.com/dsru5pryd/image/upload/f_auto,q_auto/images/2026/dreamcatchers-gameboy.jpg)
 
 Eddie volunteers three days a week, and you could hear the pride in it as he showed us around. He is learning the horses from the ground up. He started by cooling them down after their rides, and now he tacks and grooms them; his next step will be leading the horses with the riders up top. What a wonderful thing for Eddie to give his time.
 

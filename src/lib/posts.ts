@@ -265,27 +265,13 @@ export function getBlogPageData(options: {
   query?: string;
 }) {
   const allPosts = getAllPosts();
-
-  return {
-    allPosts,
-    posts: filterPostsFromList(allPosts, options),
-    destinations: [
-      ...new Set(
-        allPosts.map((post) => post.destination).filter((value) => Boolean(value?.trim())),
-      ),
-    ].sort(),
-    years: [
-      ...new Set(
-        allPosts
-          .map((post) => post.year)
-          .filter((year): year is number => typeof year === "number" && !Number.isNaN(year)),
-      ),
-    ].sort((a, b) => b - a),
-    categories: [
-      ...new Set(allPosts.flatMap((post) => post.categories ?? []).filter(Boolean)),
-    ].sort(),
-    tags: [...new Set(allPosts.flatMap((post) => post.tags ?? []).filter(Boolean))].sort(),
-  };
+  const posts = filterPostsFromList(allPosts, options);
+  const uniq = (values) => [...new Set(values.filter((v) => Boolean(v && String(v).trim())))];
+  const destinations = uniq(filterPostsFromList(allPosts, { ...options, destination: undefined }).map((post) => post.destination)).sort();
+  const years = uniq(filterPostsFromList(allPosts, { ...options, year: undefined }).map((post) => post.year).filter((y) => typeof y === "number" && !Number.isNaN(y))).sort((a, b) => b - a);
+  const categories = uniq(filterPostsFromList(allPosts, { ...options, category: undefined }).flatMap((post) => post.categories ?? [])).sort();
+  const tags = uniq(filterPostsFromList(allPosts, { ...options, tag: undefined }).flatMap((post) => post.tags ?? [])).sort();
+  return { allPosts, posts, destinations, years, categories, tags };
 }
 
 export function searchPosts(query: string): SearchResult[] {
