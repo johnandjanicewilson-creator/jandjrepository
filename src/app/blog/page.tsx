@@ -17,6 +17,7 @@ interface BlogPageProps {
 export const metadata = {
   title: "Blog",
   description: "Browse all travel stories by destination, year, category, and tag.",
+  alternates: { canonical: "/blog" },
 };
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
