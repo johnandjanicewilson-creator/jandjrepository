@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -6,18 +8,18 @@ export default function DashboardPage() {
         Welcome to your travel writing workspace.
       </p>
       <div className="mt-8 grid gap-4">
-        <div className="rounded-lg border p-6">
+        <Link href="/dashboard/new" className="block rounded-lg border p-6 hover:bg-gray-100">
           <h2 className="text-xl font-semibold">New Post</h2>
           <p>Write a new travel story.</p>
-        </div>
+        </Link>
         <div className="rounded-lg border p-6">
           <h2 className="text-xl font-semibold">Edit Existing Post</h2>
           <p>Continue or update an earlier story.</p>
         </div>
-        <div className="rounded-lg border p-6">
+        <Link href="/dashboard/drafts" className="block rounded-lg border p-6 hover:bg-gray-100">
           <h2 className="text-xl font-semibold">Saved Drafts</h2>
           <p>Return to stories that are not yet published.</p>
-        </div>
+        </Link>
       </div>
     </main>
   );
