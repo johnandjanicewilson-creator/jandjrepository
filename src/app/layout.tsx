@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Source_Sans_3 } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { auth } from "@/auth";
 import { playfair, theSignature } from "@/lib/fonts";
 import { SITE } from "@/lib/constants";
 import "./globals.css";
@@ -35,18 +36,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html
       lang="en"
       className={`${cormorant.variable} ${sourceSans.variable} ${playfair.variable} ${theSignature.variable} h-full scroll-smooth`}
     >
       <body className="flex min-h-full flex-col font-sans antialiased" suppressHydrationWarning>
-        <Header />
+        <Header isWriter={!!session?.user} />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>

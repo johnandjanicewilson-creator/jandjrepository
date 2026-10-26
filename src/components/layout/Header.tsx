@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { SiteLogo } from "@/components/layout/SiteLogo";
 import { SearchBar } from "@/components/ui/SearchBar";
 
-export function Header() {
+export function Header({ isWriter = false }: { isWriter?: boolean }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -39,6 +39,14 @@ export function Header() {
               </Link>
             );
           })}
+          {isWriter && (
+            <Link
+              href="/dashboard"
+              className="rounded-full px-4 py-2 text-sm font-medium text-foreground hover:bg-cream hover:text-sage"
+            >
+              Writing Dashboard
+            </Link>
+          )}
         </nav>
 
         <div className="hidden md:block md:w-56 lg:w-64">
@@ -98,6 +106,15 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            {isWriter && (
+              <Link
+                href="/dashboard"
+                className="rounded-lg px-3 py-2.5 text-base font-medium hover:bg-cream"
+                onClick={() => setMobileOpen(false)}
+              >
+                Writing Dashboard
+              </Link>
+            )}
           </nav>
         </div>
       )}
