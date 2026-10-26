@@ -3,6 +3,7 @@ export type TravelDraft = {
   title: string;
   story: string;
   date?: string;
+  destination?: string;
   updatedAt: string;
 };
 
