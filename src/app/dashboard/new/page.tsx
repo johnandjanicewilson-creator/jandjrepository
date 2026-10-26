@@ -8,7 +8,6 @@ export default function NewPostPage() {
   const [story, setStory] = useState("");
   const [date, setDate] = useState("");
   const [destination, setDestination] = useState("");
-  const [destination, setDestination] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
