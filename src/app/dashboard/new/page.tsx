@@ -1,14 +1,51 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getDraft, saveDraft } from "@/lib/dashboard/drafts";
 
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [story, setStory] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [message, setMessage] = useState("");
+  const [draftId, setDraftId] = useState<string | null>(null);
+
+  function handleSaveDraft() {
+    if (!title.trim() && !story.trim()) {
+      setMessage("Please enter a title or some story text first.");
+      return;
+    }
+
+    try {
+      const id = draftId ?? crypto.randomUUID();
+      saveDraft({
+        id,
+        title,
+        story,
+        updatedAt: new Date().toISOString(),
+      });
+      setDraftId(id);
+      setMessage("Draft saved! You can find it under Saved Drafts.");
+    } catch {
+      setMessage("Unable to save. Please try again.");
+    }
+  }
 
   useEffect(() => {
     try {
+      const requestedId = new URLSearchParams(window.location.search).get("draft");
+      if (requestedId) {
+        const existing = getDraft(requestedId);
+        if (existing) {
+          setDraftId(existing.id);
+          setTitle(existing.title);
+          setStory(existing.story);
+          setLoaded(true);
+          return;
+        }
+        setMessage("That saved draft could not be found.");
+      }
+
       const saved = localStorage.getItem("jj-travel-new-draft");
       if (saved) {
         const draft = JSON.parse(saved);
@@ -65,6 +102,16 @@ export default function NewPostPage() {
           onChange={(e) => setStory(e.target.value)}
         />
       </div>
+
+      <button
+        type="button"
+        onClick={handleSaveDraft}
+        className="mt-6 rounded-lg bg-green-800 px-6 py-3 font-semibold text-white"
+      >
+        Save Draft
+      </button>
+
+      {message && <p role="status" className="mt-3">{message}</p>}
 
       <p className="mt-4 text-sm">
         Your draft is saved automatically in this browser on this computer. Publishing is not available yet.
