@@ -46,12 +46,7 @@ export default function NewPostPage() {
         setMessage("That saved draft could not be found.");
       }
 
-      const saved = localStorage.getItem("jj-travel-new-draft");
-      if (saved) {
-        const draft = JSON.parse(saved);
-        setTitle(draft.title ?? "");
-        setStory(draft.story ?? "");
-      }
+      // A new post starts blank. Saved drafts open by their ID.
     } catch {
       // Ignore damaged or unavailable browser storage.
     }
