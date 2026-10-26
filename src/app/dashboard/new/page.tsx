@@ -8,6 +8,7 @@ export default function NewPostPage() {
   const [story, setStory] = useState("");
   const [date, setDate] = useState("");
   const [destination, setDestination] = useState("");
+  const [destination, setDestination] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function NewPostPage() {
           setTitle(existing.title);
           setStory(existing.story);
           setDate(existing.date ?? "");
+          setDestination(existing.destination ?? "");
           setDestination(existing.destination ?? "");
           setLoaded(true);
           return;
@@ -101,6 +103,19 @@ export default function NewPostPage() {
           className="mt-2 rounded-lg border p-3"
           value={date}
           onChange={(e) => setDate(e.target.value)}
+        />
+      </div>
+
+      <div className="mt-6">
+        <label htmlFor="destination" className="block font-semibold">
+          Destination
+        </label>
+        <input
+          id="destination"
+          className="mt-2 w-full rounded-lg border p-3"
+          placeholder="Example: Washington, D.C."
+          value={destination}
+          onChange={(e) => setDestination(e.target.value)}
         />
       </div>
 
