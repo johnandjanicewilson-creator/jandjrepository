@@ -6,6 +6,7 @@ import { getDraft, saveDraft } from "@/lib/dashboard/drafts";
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [story, setStory] = useState("");
+  const [date, setDate] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -22,6 +23,7 @@ export default function NewPostPage() {
         id,
         title,
         story,
+        date,
         updatedAt: new Date().toISOString(),
       });
       setDraftId(id);
@@ -40,6 +42,7 @@ export default function NewPostPage() {
           setDraftId(existing.id);
           setTitle(existing.title);
           setStory(existing.story);
+          setDate(existing.date ?? "");
           setLoaded(true);
           return;
         }
@@ -82,6 +85,19 @@ export default function NewPostPage() {
           placeholder="Enter your story title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
+
+      <div className="mt-6">
+        <label htmlFor="date" className="block font-semibold">
+          Story Date
+        </label>
+        <input
+          id="date"
+          type="date"
+          className="mt-2 rounded-lg border p-3"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
         />
       </div>
 

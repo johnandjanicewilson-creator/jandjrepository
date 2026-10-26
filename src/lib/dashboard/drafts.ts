@@ -2,6 +2,7 @@ export type TravelDraft = {
   id: string;
   title: string;
   story: string;
+  date?: string;
   updatedAt: string;
 };
 
