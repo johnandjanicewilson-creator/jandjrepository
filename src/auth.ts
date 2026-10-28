@@ -4,6 +4,18 @@ import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
+  callbacks: {
+    jwt({ token, user }) {
+      if (user?.id) token.writerId = user.id;
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user && typeof token.writerId === "string") {
+        session.user.id = token.writerId;
+      }
+      return session;
+    },
+  },
   providers: [
     Credentials({
       credentials: {

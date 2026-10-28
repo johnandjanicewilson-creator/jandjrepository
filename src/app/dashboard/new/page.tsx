@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getDraft, saveDraft } from "@/lib/dashboard/drafts";
 
 export default function NewPostPage() {
@@ -11,33 +11,114 @@ export default function NewPostPage() {
   const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [cloudDraftId, setCloudDraftId] = useState<string | null>(null);
+  const savingRef = useRef(false);
+  const [changesMade, setChangesMade] = useState(false);
+  const editVersionRef = useRef(0);
+  const [recoveryAvailable, setRecoveryAvailable] = useState(false);
+  const [recoveryDraft, setRecoveryDraft] = useState<{
+    title: string;
+    story: string;
+    date: string;
+    destination: string;
+    backedUpAt: string;
+  } | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  function handleSaveDraft() {
+  async function handleSaveDraft() {
+    if (!loaded) {
+      setMessage("Please wait until the story has loaded before saving.");
+      return;
+    }
+
     if (!title.trim() && !story.trim()) {
       setMessage("Please enter a title or some story text first.");
       return;
     }
 
+    if (recoveryAvailable) {
+      setMessage("Please choose which version to keep before saving.");
+      return;
+    }
+
+    if (savingRef.current) return;
+    savingRef.current = true;
+
+    const versionBeingSaved = editVersionRef.current;
+    setMessage("Saving to Neon...");
+
     try {
-      const id = draftId ?? crypto.randomUUID();
-      saveDraft({
-        id,
-        title,
-        story,
-        date,
-        destination,
-        updatedAt: new Date().toISOString(),
+      const url = cloudDraftId
+        ? `/api/dashboard/drafts/${cloudDraftId}`
+        : "/api/dashboard/drafts";
+
+      const response = await fetch(url, {
+        method: cloudDraftId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, story, date, destination, backedUpAt: new Date().toISOString() }),
       });
-      setDraftId(id);
-      setMessage("Draft saved! You can find it under Saved Drafts.");
+
+      if (!response.ok) {
+        throw new Error("Database save failed");
+      }
+
+      const result = await response.json();
+      setCloudDraftId(result.id);
+      if (editVersionRef.current === versionBeingSaved) {
+        try {
+          localStorage.removeItem(
+            `jj-travel-backup-${cloudDraftId || "new"}`
+          );
+          localStorage.removeItem(
+            `jj-travel-backup-${result.id}`
+          );
+        } catch {
+          // Browser storage may be unavailable.
+        }
+        setChangesMade(false);
+        setMessage(`Saved to Neon at ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.`);
+      } else {
+        setChangesMade(true);
+        setMessage("Newer changes are waiting to be saved.");
+      }
     } catch {
-      setMessage("Unable to save. Please try again.");
+      setChangesMade(true);
+      setRetryCount((count) => count + 1);
+      setMessage("Not saved to Neon — connection problem. Keep this page open. We will try again automatically.");
+    } finally {
+      savingRef.current = false;
     }
   }
 
   useEffect(() => {
     try {
-      const requestedId = new URLSearchParams(window.location.search).get("draft");
+      const params = new URLSearchParams(window.location.search);
+      const cloudId = params.get("cloud");
+
+      if (cloudId) {
+        fetch(`/api/dashboard/drafts/${encodeURIComponent(cloudId)}`, {
+          cache: "no-store",
+        })
+          .then(async (response) => {
+            if (!response.ok) throw new Error("Unable to open cloud draft");
+            return response.json();
+          })
+          .then(({ draft }) => {
+            setCloudDraftId(draft.id);
+            setTitle(draft.title ?? "");
+            setStory(draft.story ?? "");
+            setDestination(draft.destination ?? "");
+            setDate(draft.date ? String(draft.date).slice(0, 10) : "");
+            setLoaded(true);
+          })
+          .catch(() => {
+            setMessage("Could not open this Neon draft. Please try again.");
+            setLoaded(false);
+          });
+        return;
+      }
+
+      const requestedId = params.get("draft");
       if (requestedId) {
         const existing = getDraft(requestedId);
         if (existing) {
@@ -45,7 +126,6 @@ export default function NewPostPage() {
           setTitle(existing.title);
           setStory(existing.story);
           setDate(existing.date ?? "");
-          setDestination(existing.destination ?? "");
           setDestination(existing.destination ?? "");
           setLoaded(true);
           return;
@@ -61,16 +141,65 @@ export default function NewPostPage() {
   }, []);
 
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || changesMade) return;
+
     try {
+      const backupKey = `jj-travel-backup-${cloudDraftId || "new"}`;
+      const saved = localStorage.getItem(backupKey);
+      if (!saved) return;
+
+      const backup = JSON.parse(saved);
+      if (
+        typeof backup.title !== "string" ||
+        typeof backup.story !== "string" ||
+        typeof backup.date !== "string" ||
+        typeof backup.destination !== "string" ||
+        typeof backup.backedUpAt !== "string"
+      ) return;
+
+      const differs =
+        backup.title !== title ||
+        backup.story !== story ||
+        backup.date !== date ||
+        backup.destination !== destination;
+
+      if (differs) {
+        setRecoveryDraft(backup);
+        setRecoveryAvailable(true);
+      }
+    } catch {
+      // Ignore unavailable or damaged browser backups.
+    }
+  }, [loaded, cloudDraftId]);
+
+  useEffect(() => {
+    if (!loaded || !changesMade || recoveryAvailable) return;
+    try {
+      const backupKey = `jj-travel-backup-${cloudDraftId || "new"}`;
       localStorage.setItem(
-        "jj-travel-new-draft",
-        JSON.stringify({ title, story })
+        backupKey,
+        JSON.stringify({
+          title,
+          story,
+          date,
+          destination,
+          backedUpAt: new Date().toISOString()
+        })
       );
     } catch {
       // Browser storage may be unavailable.
     }
-  }, [title, story, loaded]);
+  }, [title, story, date, destination, loaded, cloudDraftId]);
+
+  useEffect(() => {
+    if (!loaded || !changesMade || recoveryAvailable) return;
+
+    const timer = setTimeout(() => {
+      void handleSaveDraft();
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [loaded, changesMade, title, story, date, destination, retryCount, recoveryAvailable]);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
@@ -79,16 +208,79 @@ export default function NewPostPage() {
         Write your story here, or paste it from OpenOffice.
       </p>
 
+      {recoveryAvailable && recoveryDraft && (
+        <div
+          role="alert"
+          className="mt-6 rounded-lg border-2 border-amber-500 bg-amber-50 p-5 text-gray-900"
+        >
+          <h2 className="text-lg font-bold">Unsaved Browser Copy Found</h2>
+          <p className="mt-2">
+            Firefox has a different copy of this story. It may contain
+            writing that was not saved to Neon.
+          </p>
+          <p className="mt-2 text-sm">
+            We will let you choose which version to keep.
+            Nothing has been restored automatically.
+          </p>
+          <button
+            type="button"
+            className="mt-4 rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white"
+            onClick={() => {
+              if (!recoveryDraft) return;
+              setTitle(recoveryDraft.title);
+              setStory(recoveryDraft.story);
+              setDate(recoveryDraft.date);
+              setDestination(recoveryDraft.destination);
+              editVersionRef.current += 1;
+              setChangesMade(true);
+              setRecoveryAvailable(false);
+              setRecoveryDraft(null);
+              setMessage("Browser copy recovered. Save to Neon to keep it.");
+            }}
+          >
+            Recover Browser Copy
+          </button>
+          <button
+            type="button"
+            className="ml-3 mt-4 rounded-lg border border-gray-500 px-4 py-2 font-semibold"
+            onClick={() => {
+              try {
+                const backupKey = `jj-travel-backup-${cloudDraftId || "new"}`;
+                const oldBackup = localStorage.getItem(backupKey);
+                if (oldBackup) {
+                  const archiveKey = `jj-travel-archive-${crypto.randomUUID()}`;
+                  localStorage.setItem(archiveKey, oldBackup);
+                  localStorage.removeItem(backupKey);
+                }
+              } catch {
+                setMessage("Could not archive the browser copy. Please try again.");
+                return;
+              }
+              setRecoveryAvailable(false);
+              setRecoveryDraft(null);
+              setMessage("Keeping the Neon version. The browser copy was archived.");
+            }}
+          >
+            Keep Neon Version
+          </button>
+        </div>
+      )}
+
       <div className="mt-8">
         <label htmlFor="title" className="block font-semibold">
           Story Title
         </label>
         <input
+          disabled={recoveryAvailable}
           id="title"
           className="mt-2 w-full rounded-lg border p-3"
           placeholder="Enter your story title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            editVersionRef.current += 1;
+            setChangesMade(true);
+          }}
         />
       </div>
 
@@ -97,11 +289,16 @@ export default function NewPostPage() {
           Story Date
         </label>
         <input
+          disabled={recoveryAvailable}
           id="date"
           type="date"
           className="mt-2 rounded-lg border p-3"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => {
+            setDate(e.target.value);
+            editVersionRef.current += 1;
+            setChangesMade(true);
+          }}
         />
       </div>
 
@@ -110,24 +307,16 @@ export default function NewPostPage() {
           Destination
         </label>
         <input
+          disabled={recoveryAvailable}
           id="destination"
           className="mt-2 w-full rounded-lg border p-3"
           placeholder="Example: Washington, D.C."
           value={destination}
-          onChange={(e) => setDestination(e.target.value)}
-        />
-      </div>
-
-      <div className="mt-6">
-        <label htmlFor="destination" className="block font-semibold">
-          Destination
-        </label>
-        <input
-          id="destination"
-          className="mt-2 w-full rounded-lg border p-3"
-          placeholder="Example: Washington, D.C."
-          value={destination}
-          onChange={(e) => setDestination(e.target.value)}
+          onChange={(e) => {
+            setDestination(e.target.value);
+            editVersionRef.current += 1;
+            setChangesMade(true);
+          }}
         />
       </div>
 
@@ -136,18 +325,24 @@ export default function NewPostPage() {
           Your Story
         </label>
         <textarea
+          disabled={recoveryAvailable}
           id="story"
           className="mt-2 min-h-96 w-full rounded-lg border p-4"
           placeholder="Start writing your travel story..."
           value={story}
-          onChange={(e) => setStory(e.target.value)}
+          onChange={(e) => {
+            setStory(e.target.value);
+            editVersionRef.current += 1;
+            setChangesMade(true);
+          }}
         />
       </div>
 
       <button
         type="button"
         onClick={handleSaveDraft}
-        className="mt-6 rounded-lg bg-green-800 px-6 py-3 font-semibold text-white"
+        disabled={!loaded || recoveryAvailable}
+        className="mt-6 rounded-lg bg-green-800 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         Save Draft
       </button>
@@ -155,7 +350,7 @@ export default function NewPostPage() {
       {message && <p role="status" className="mt-3">{message}</p>}
 
       <p className="mt-4 text-sm">
-        Your draft is saved automatically in this browser on this computer. Publishing is not available yet.
+        Your changes are automatically saved to Neon while you write. Publishing is not available yet.
       </p>
     </main>
   );

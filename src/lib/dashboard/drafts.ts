@@ -4,7 +4,6 @@ export type TravelDraft = {
   story: string;
   date?: string;
   destination?: string;
-  destination?: string;
   updatedAt: string;
 };
 
@@ -35,4 +34,25 @@ export function saveDraft(draft: TravelDraft): void {
 
 export function getDraft(id: string): TravelDraft | undefined {
   return getDrafts().find((draft) => draft.id === id);
+}
+
+const TRANSFER_KEY = "jj-travel-transferred-drafts";
+
+export function getTransferredDraftIds(): string[] {
+  try {
+    const saved = localStorage.getItem(TRANSFER_KEY);
+    const ids = saved ? JSON.parse(saved) : [];
+    return Array.isArray(ids)
+      ? ids.filter((id): id is string => typeof id === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function markDraftTransferred(id: string): void {
+  const ids = getTransferredDraftIds();
+  if (!ids.includes(id)) {
+    localStorage.setItem(TRANSFER_KEY, JSON.stringify([...ids, id]));
+  }
 }
