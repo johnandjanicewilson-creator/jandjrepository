@@ -56,9 +56,12 @@ export default function EditExistingPostPage({
             <p className="text-sm text-gray-600">
               {String(post.date)} — {post.destination}
             </p>
-            <p className="mt-2 text-sm">
-              Editing will be connected in the next stage.
-            </p>
+            <Link
+              href={`/dashboard/edit/${encodeURIComponent(post.slug)}`}
+              className="mt-2 inline-block text-blue-700 underline"
+            >
+              Open Story
+            </Link>
           </div>
         ))}
       </div>
