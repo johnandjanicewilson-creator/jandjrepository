@@ -213,3 +213,57 @@ article.blog-post {
   font-weight: 600;
   color: var(--foreground);
 }
+
+/* Photograph sizes saved by the travel story editor */
+.prose-travel img[data-photo-size="small"] {
+  width: 25%;
+}
+
+.prose-travel img[data-photo-size="medium"] {
+  width: 50%;
+}
+
+.prose-travel img[data-photo-size="large"] {
+  width: 75%;
+}
+
+.prose-travel img[data-photo-size="full"] {
+  width: 100%;
+}
+
+/* Photograph alignment saved by the editor */
+.prose-travel img[data-photo-position="left"] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.prose-travel img[data-photo-position="center"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.prose-travel img[data-photo-position="right"] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Captions for photographs saved by the travel story editor */
+.prose-travel img[data-photo-caption]:not([data-photo-caption=""]) {
+  margin-bottom: 0.5rem;
+}
+
+.prose-travel p:has(> img[data-photo-caption]) {
+  display: flow-root;
+}
+
+/* Caption text beneath photographs in published HTML stories */
+.prose-travel .editor-photo-caption {
+  display: block;
+  clear: both;
+  margin: 0.25rem auto 2rem;
+  text-align: center;
+  font-size: 0.9em;
+  font-style: italic;
+  line-height: 1.5;
+  color: #666;
+}

@@ -1,3 +1,4 @@
+import { getPublishedStory } from "@/lib/publishing/getPublishedStory";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -15,6 +16,8 @@ import {
 } from "@/lib/posts";
 import { formatDate, getPostDisplayDate } from "@/lib/utils";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -54,12 +57,15 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const displayDate = getPostDisplayDate(post);
   const related = getRelatedPosts(post);
-  const body =
-    post.format === "mdx" ? (
-      <PostMdx content={post.content} />
-    ) : (
-      <PostContent html={await markdownToHtml(post.content)} />
-    );
+  const published = await getPublishedStory(slug);
+
+  const body = published ? (
+    <PostContent html={published.content as string} />
+  ) : post.format === "mdx" ? (
+    <PostMdx content={post.content} />
+  ) : (
+    <PostContent html={await markdownToHtml(post.content)} />
+  );
 
   return (
     <article className="blog-post w-full">

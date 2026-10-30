@@ -31,6 +31,52 @@ export default function NewPostPage() {
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
+  async function handlePublishStory() {
+    if (
+      !loaded ||
+      !cloudDraftId ||
+      !editLockHeld ||
+      revision === null ||
+      !lockSessionRef.current ||
+      changesMade ||
+      recoveryAvailable ||
+      savingRef.current ||
+      lockRenewalRef.current
+    ) {
+      setMessage("Save your changes successfully before publishing.");
+      return;
+    }
+
+    if (!window.confirm(
+      "Publish this saved story to the public website? Visitors will see this version once the website is connected."
+    )) return;
+
+    setMessage("Publishing story...");
+
+    try {
+      const response = await fetch("/api/dashboard/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draftId: cloudDraftId,
+          revision,
+          lockSession: lockSessionRef.current
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setMessage(result.error || "Publishing failed.");
+        return;
+      }
+
+      setMessage("Published version saved in Neon. Public website connection is still being completed.");
+    } catch {
+      setMessage("Could not contact the publishing service.");
+    }
+  }
+
   async function handleFinishEditing() {
     if (finishingRef.current) return;
 
@@ -484,6 +530,22 @@ export default function NewPostPage() {
           className="ml-3 mt-6 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           Finish Editing
+        </button>
+      )}
+
+      {cloudDraftId && editLockHeld && (
+        <button
+          type="button"
+          onClick={handlePublishStory}
+          disabled={
+            !loaded ||
+            changesMade ||
+            recoveryAvailable ||
+            revision === null
+          }
+          className="ml-3 mt-6 rounded-lg bg-amber-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Publish Story
         </button>
       )}
 
