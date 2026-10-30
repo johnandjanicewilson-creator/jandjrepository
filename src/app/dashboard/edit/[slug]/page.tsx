@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EditStoryButton from "./EditStoryButton";
 import { notFound } from "next/navigation";
 import { getPostBySlug } from "@/lib/posts";
 import { markdownToHtml } from "@/lib/markdown";
@@ -36,6 +37,8 @@ export default async function ExistingStoryPage({
       <p className="mt-2 text-sm">
         This preview cannot change or publish your original story.
       </p>
+
+      <EditStoryButton slug={slug} />
 
       <article
         className="prose mt-8 max-w-none"

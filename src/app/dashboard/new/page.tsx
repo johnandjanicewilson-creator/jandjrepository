@@ -330,9 +330,13 @@ export default function NewPostPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="text-3xl font-bold">Write a New Travel Story</h1>
+      <h1 className="text-3xl font-bold">
+        {cloudDraftId ? "Edit Travel Story" : "Write a New Travel Story"}
+      </h1>
       <p className="mt-3">
-        Write your story here, or paste it from OpenOffice.
+        {cloudDraftId
+          ? "Edit your story and photographs, then save your changes."
+          : "Write your story here, or paste it from OpenOffice."}
       </p>
 
       {recoveryAvailable && recoveryDraft && (
