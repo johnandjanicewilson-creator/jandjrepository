@@ -1,0 +1,78 @@
+import { auth } from "@/auth";
+import { getDatabase } from "@/lib/db/neon";
+import { NextResponse } from "next/server";
+
+export async function POST(request: Request) {
+  const session = await auth();
+
+  if (session?.user?.id !== "john" && session?.user?.id !== "janice") {
+    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
+  }
+
+  try {
+    const data = await request.json();
+    const { title, story, date, destination } = data;
+
+    if (
+      typeof title !== "string" ||
+      typeof story !== "string" ||
+      typeof date !== "string" ||
+      typeof destination !== "string"
+    ) {
+      return NextResponse.json({ error: "Invalid story information" }, { status: 400 });
+    }
+
+    if (title.length > 300 || story.length > 500000 ||
+        destination.length > 300 ||
+        (date && !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
+      return NextResponse.json({ error: "Story information is too long or invalid" }, { status: 400 });
+    }
+
+    const sql = getDatabase();
+
+    const rows = await sql`
+      INSERT INTO travel_drafts (author, title, content, travel_date, destination)
+      VALUES (
+        ${session.user.id},
+        ${title},
+        ${story},
+        ${date || null},
+        ${destination}
+      )
+      RETURNING id
+    `;
+
+    return NextResponse.json({ id: rows[0].id });
+  } catch {
+    return NextResponse.json({ error: "Unable to save draft" }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  const session = await auth();
+
+  if (session?.user?.id !== "john" && session?.user?.id !== "janice") {
+    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
+  }
+
+  try {
+    const sql = getDatabase();
+
+    const rows = await sql`
+      SELECT id, title, content AS story, destination,
+             travel_date AS date, updated_at
+      FROM travel_drafts
+      ORDER BY updated_at DESC
+    `;
+
+    return NextResponse.json(
+      { drafts: rows },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  } catch {
+    return NextResponse.json(
+      { error: "Unable to load drafts" },
+      { status: 500 }
+    );
+  }
+}

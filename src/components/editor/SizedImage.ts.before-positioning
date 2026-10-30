@@ -1,0 +1,25 @@
+import Image from "@tiptap/extension-image";
+
+export const SizedImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      photoSize: {
+        default: "full",
+        parseHTML: (element) =>
+          element.getAttribute("data-photo-size") || "full",
+        renderHTML: (attributes) => ({
+          "data-photo-size": attributes.photoSize,
+          style: `width: ${
+            {
+              small: "25%",
+              medium: "50%",
+              large: "75%",
+              full: "100%",
+            }[attributes.photoSize as string] || "100%"
+          }; height: auto;`,
+        }),
+      },
+    };
+  },
+});

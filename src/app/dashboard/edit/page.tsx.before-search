@@ -1,0 +1,41 @@
+import Link from "next/link";
+import { getAllPosts } from "@/lib/posts";
+
+export default function EditExistingPostPage() {
+  const posts = getAllPosts();
+
+  return (
+    <main className="mx-auto max-w-3xl px-6 py-12">
+      <Link href="/dashboard" className="text-blue-700 underline">
+        Back to Dashboard
+      </Link>
+
+      <h1 className="mt-6 text-3xl font-bold">
+        Edit Existing Post
+      </h1>
+
+      <p className="mt-3">
+        Select a travel story. Your original stories and photographs
+        will remain unchanged.
+      </p>
+
+      <p className="mt-4 font-semibold">
+        {posts.length} travel stories found
+      </p>
+
+      <div className="mt-6 space-y-3">
+        {posts.map((post) => (
+          <div key={post.slug} className="rounded-lg border p-4">
+            <h2 className="font-semibold">{post.title}</h2>
+            <p className="text-sm text-gray-600">
+              {String(post.date)} — {post.destination}
+            </p>
+            <p className="mt-2 text-sm">
+              Editing will be connected in the next stage.
+            </p>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}

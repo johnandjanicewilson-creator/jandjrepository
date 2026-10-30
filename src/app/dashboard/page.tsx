@@ -12,10 +12,10 @@ export default function DashboardPage() {
           <h2 className="text-xl font-semibold">New Post</h2>
           <p>Write a new travel story.</p>
         </Link>
-        <div className="rounded-lg border p-6">
+        <Link href="/dashboard/edit" className="block rounded-lg border p-6 hover:bg-gray-100">
           <h2 className="text-xl font-semibold">Edit Existing Post</h2>
           <p>Continue or update an earlier story.</p>
-        </div>
+        </Link>
         <Link href="/dashboard/drafts" className="block rounded-lg border p-6 hover:bg-gray-100">
           <h2 className="text-xl font-semibold">Saved Drafts</h2>
           <p>Return to stories that are not yet published.</p>

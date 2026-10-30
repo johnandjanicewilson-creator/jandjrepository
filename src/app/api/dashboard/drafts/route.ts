@@ -11,13 +11,15 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
-    const { title, story, date, destination } = data;
+    const { title, story, date, destination, lockSession } = data;
 
     if (
       typeof title !== "string" ||
       typeof story !== "string" ||
       typeof date !== "string" ||
-      typeof destination !== "string"
+      typeof destination !== "string" ||
+      typeof lockSession !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(lockSession)
     ) {
       return NextResponse.json({ error: "Invalid story information" }, { status: 400 });
     }
@@ -31,18 +33,24 @@ export async function POST(request: Request) {
     const sql = getDatabase();
 
     const rows = await sql`
-      INSERT INTO travel_drafts (author, title, content, travel_date, destination)
+      INSERT INTO travel_drafts (
+        author, title, content, travel_date, destination,
+        locked_by, lock_expires_at, lock_session
+      )
       VALUES (
         ${session.user.id},
         ${title},
         ${story},
         ${date || null},
-        ${destination}
+        ${destination},
+        ${session.user.id},
+        NOW() + INTERVAL '5 minutes',
+        ${lockSession}
       )
-      RETURNING id
+      RETURNING id, revision
     `;
 
-    return NextResponse.json({ id: rows[0].id });
+    return NextResponse.json({ id: rows[0].id, revision: rows[0].revision });
   } catch {
     return NextResponse.json({ error: "Unable to save draft" }, { status: 500 });
   }
@@ -62,7 +70,6 @@ export async function GET() {
       SELECT id, title, content AS story, destination,
              travel_date AS date, updated_at
       FROM travel_drafts
-      WHERE author = ${session.user.id}
       ORDER BY updated_at DESC
     `;
 

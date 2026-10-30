@@ -21,13 +21,17 @@ export async function PUT(
 
   try {
     const data = await request.json();
-    const { title, story, date, destination } = data;
+    const { title, story, date, destination, revision, lockSession } = data;
 
     if (
       typeof title !== "string" ||
       typeof story !== "string" ||
       typeof date !== "string" ||
       typeof destination !== "string" ||
+      !Number.isSafeInteger(revision) ||
+      revision < 0 ||
+      typeof lockSession !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(lockSession) ||
       title.length > 300 ||
       story.length > 500000 ||
       destination.length > 300 ||
@@ -44,16 +48,25 @@ export async function PUT(
           content = ${story},
           travel_date = ${date || null},
           destination = ${destination},
-          updated_at = NOW()
-      WHERE id = ${id} AND author = ${author}
-      RETURNING id
+          updated_at = NOW(),
+          revision = revision + 1,
+          lock_expires_at = NOW() + INTERVAL '5 minutes'
+      WHERE id = ${id}
+        AND locked_by = ${author}
+        AND lock_session = ${lockSession}
+        AND lock_expires_at > NOW()
+        AND revision = ${revision}
+      RETURNING id, revision
     `;
 
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Editing conflict or expired lock" },
+        { status: 409 }
+      );
     }
 
-    return NextResponse.json({ id: rows[0].id });
+    return NextResponse.json({ id: rows[0].id, revision: rows[0].revision });
   } catch {
     return NextResponse.json({ error: "Unable to update draft" }, { status: 500 });
   }
@@ -81,9 +94,9 @@ export async function GET(
 
     const rows = await sql`
       SELECT id, title, content AS story, destination,
-             travel_date AS date, updated_at
+             travel_date AS date, updated_at, revision
       FROM travel_drafts
-      WHERE id = ${id} AND author = ${author}
+      WHERE id = ${id}
       LIMIT 1
     `;
 

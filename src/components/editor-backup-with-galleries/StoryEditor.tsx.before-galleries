@@ -1,0 +1,277 @@
+
+"use client";
+
+import { useEffect } from "react";
+import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import {
+  Bold,
+  Italic,
+  Heading2,
+  Heading3,
+  List,
+  Undo2,
+  Redo2,
+  Link2,
+  IndentIncrease,
+  Quote,
+  RemoveFormatting,
+  ImagePlus,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Captions,
+} from "lucide-react";
+import { SizedImage } from "./SizedImage";
+import { InsetText } from "./InsetText";
+
+type StoryEditorProps = {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+};
+
+export default function StoryEditor({
+  value,
+  onChange,
+  disabled = false,
+}: StoryEditorProps) {
+  const editor = useEditor({
+    extensions: [StarterKit, InsetText, SizedImage],
+    content: value,
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class:
+          "min-h-96 w-full rounded-lg border p-4 focus:outline-none         [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:text-xl [&_h3]:font-semibold  [&_ul]:list-disc [&_ul]:pl-6 [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:mx-8 [&_blockquote]:px-4 [&_blockquote]:text-center [&_blockquote]:italic ",
+
+      },
+    },
+  });
+
+  const photoSelected = useEditorState({
+    editor,
+    selector: ({ editor }) => editor?.isActive("image") ?? false,
+  });
+
+  useEffect(() => {
+    if (!editor) return;
+
+    if (editor.getHTML() !== value) {
+      editor.commands.setContent(value, { emitUpdate: false });
+    }
+  }, [editor, value]);
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(!disabled);
+  }, [editor, disabled]);
+  return (
+    <div>
+      <div className="sticky top-20 z-30 mb-2 flex flex-wrap items-center gap-1 rounded-lg border bg-white p-2 shadow-sm">
+        <button title="Heading 2"
+          type="button"
+          onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <Heading2 size={18} aria-label="Heading 2" />
+        </button>       
+        <button title="Heading 3"
+          type="button"
+          onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <Heading3 size={18} aria-label="Heading 3" />
+        </button>
+ <button title="Bold"
+          type="button"
+          onClick={() => editor?.chain().focus().toggleBold().run()}
+          className="rounded border px-3 py-2 font-bold"
+        >
+          <Bold size={18} aria-label="Bold" />
+        </button>
+        <button title="Italic"
+          type="button"
+          onClick={() => editor?.chain().focus().toggleItalic().run()}
+          className="rounded border px-3 py-2 italic"
+        >
+          <Italic size={18} aria-label="Italic" />
+        </button>
+        <button title="Bullet List"
+          type="button"
+          onClick={() => editor?.chain().focus().toggleBulletList().run()}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <List size={18} aria-label="Bullet List" />
+        </button>
+<button title="Undo"
+          type="button"
+          onClick={() => editor?.chain().focus().undo().run()}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <Undo2 size={18} aria-label="Undo" />
+        </button>
+        <button title="Redo"
+          type="button"
+          onClick={() => editor?.chain().focus().redo().run()}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <Redo2 size={18} aria-label="Redo" />
+        </button>
+        <button title="Insert Link"
+          type="button"
+          onClick={() => {
+            if (!editor) return;
+                        const { from, to } = editor.state.selection;
+            const url = window.prompt("Enter the website address (URL):");
+            if (url) {
+              editor.chain().focus().setTextSelection({ from, to }).setLink({ href: url }).run();            
+          }}}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <Link2 size={18} aria-label="Insert Link" />
+        </button>
+        <button title="Inset Text"
+          type="button"
+          onClick={() => editor?.chain().focus().toggleInsetText().run()}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <IndentIncrease size={18} aria-label="Inset Text" />
+        </button>
+<button title="Block Quote"
+  type="button"
+  onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+  className="rounded border p-2 hover:bg-gray-100"
+>
+  <Quote size={18} aria-label="Block Quote" />
+</button>
+        <button title="Clear Formatting"
+          type="button"
+          onClick={() => editor?.chain().focus().unsetAllMarks().run()}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <RemoveFormatting size={18} aria-label="Clear Formatting" />
+        </button>
+        <button title="Insert Photo"
+          type="button"
+          disabled={!editor}
+          onClick={async () => {
+            if (!editor) return;
+
+            const picker = document.createElement("input");
+            picker.type = "file";
+            picker.accept = "image/jpeg,image/png";
+
+            picker.onchange = async () => {
+              const file = picker.files?.[0];
+              if (!file) return;
+
+              const position = editor.state.selection.from;
+              const form = new FormData();
+              form.append("file", file);
+
+              try {
+                const response = await fetch("/api/dashboard/upload", {
+                  method: "POST",
+                  body: form,
+                });
+                const result = await response.json();
+
+                if (!response.ok) {
+                  throw new Error(result.error || "Upload failed");
+                }
+
+                editor.chain().focus()
+                  .insertContentAt(position, {
+                    type: "image",
+                    attrs: { src: result.url, alt: file.name },
+                  })
+                  .run();
+              } catch (error) {
+                window.alert(
+                  error instanceof Error ? error.message : "Upload failed"
+                );
+              }
+            };
+
+            picker.click();
+          }}
+          className="rounded border p-2 hover:bg-gray-100"
+        >
+          <ImagePlus size={18} aria-label="Insert Photo" />
+        </button>
+        {(["small", "medium", "large", "full"] as const).map((size) => (
+          <button
+            key={size}
+            type="button"
+            title={`Set selected photo to ${size}`}
+            disabled={!editor || !photoSelected}
+            onClick={() =>
+              editor?.chain().focus().updateAttributes("image", {
+                photoSize: size,
+              }).run()
+            }
+            className="rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
+          >
+            <span
+              aria-label={`${size} photo size`}
+              className="inline-flex h-[18px] w-[22px] items-center justify-center"
+            >
+              <span
+                className="inline-block border-2 border-current"
+                style={{
+                  width: size === "small" ? 7 : size === "medium" ? 11 : size === "large" ? 15 : 20,
+                  height: size === "small" ? 6 : size === "medium" ? 9 : size === "large" ? 12 : 16,
+                }}
+              />
+            </span>
+          </button>
+        ))}
+        {(["left", "center", "right"] as const).map((position) => (
+          <button
+            key={position}
+            type="button"
+            title={`Position selected photo ${position}`}
+            disabled={!editor || !photoSelected}
+            onClick={() =>
+              editor?.chain().focus().updateAttributes("image", {
+                photoPosition: position,
+              }).run()
+            }
+            className="rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
+          >
+            {position === "left" ? (
+              <AlignLeft size={18} />
+            ) : position === "center" ? (
+              <AlignCenter size={18} />
+            ) : (
+              <AlignRight size={18} />
+            )}
+          </button>
+        ))}
+      <button
+        type="button"
+        title="Add or edit the selected photograph's caption"
+        disabled={!editor || !photoSelected}
+        onClick={() => {
+          if (!editor) return;
+          const current = editor.getAttributes("image").photoCaption || "";
+          const caption = window.prompt("Photo caption:", current);
+          if (caption === null) return;
+          editor.chain().focus().updateAttributes("image", {
+            photoCaption: caption,
+          }).run();
+        }}
+        className="rounded border px-3 py-2 disabled:opacity-40"
+      >
+        <Captions size={18} aria-label="Add or Edit Caption" />
+      </button>
+      </div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+

@@ -266,7 +266,7 @@ export function getBlogPageData(options: {
 }) {
   const allPosts = getAllPosts();
   const posts = filterPostsFromList(allPosts, options);
-  const uniq = (values) => [...new Set(values.filter((v) => Boolean(v && String(v).trim())))];
+  const uniq = <T extends string | number>(values: T[]): T[] => [...new Set(values.filter((v) => Boolean(v && String(v).trim())))];
   const destinations = uniq(filterPostsFromList(allPosts, { ...options, destination: undefined }).map((post) => post.destination)).sort();
   const years = uniq(filterPostsFromList(allPosts, { ...options, year: undefined }).map((post) => post.year).filter((y) => typeof y === "number" && !Number.isNaN(y))).sort((a, b) => b - a);
   const categories = uniq(filterPostsFromList(allPosts, { ...options, category: undefined }).flatMap((post) => post.categories ?? [])).sort();

@@ -55,7 +55,7 @@ export function Gallery({
   alts,
   className,
 }: GalleryProps & { imagesJson?: string }) {
-  const resolvedImages = imagesJson ? JSON.parse(imagesJson) : images;
+  const resolvedImages: string[] = imagesJson ? JSON.parse(imagesJson) : images;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const items = (resolvedImages ?? []).map((src: string, index: number) => ({

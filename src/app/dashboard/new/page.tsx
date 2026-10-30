@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getDraft, saveDraft } from "@/lib/dashboard/drafts";
+import StoryEditor from "@/components/editor/StoryEditor";
 
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
@@ -12,7 +13,12 @@ export default function NewPostPage() {
   const [message, setMessage] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [cloudDraftId, setCloudDraftId] = useState<string | null>(null);
+  const [revision, setRevision] = useState<number | null>(null);
+  const [editLockHeld, setEditLockHeld] = useState(false);
+  const lockSessionRef = useRef<string | null>(null);
   const savingRef = useRef(false);
+  const lockRenewalRef = useRef(false);
+  const finishingRef = useRef(false);
   const [changesMade, setChangesMade] = useState(false);
   const editVersionRef = useRef(0);
   const [recoveryAvailable, setRecoveryAvailable] = useState(false);
@@ -24,6 +30,50 @@ export default function NewPostPage() {
     backedUpAt: string;
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+
+  async function handleFinishEditing() {
+    if (finishingRef.current) return;
+
+    if (!loaded || !cloudDraftId || !editLockHeld || !lockSessionRef.current) {
+      setMessage("There is no active editing session to finish.");
+      return;
+    }
+
+    if (savingRef.current || changesMade || recoveryAvailable) {
+      setMessage("Please save your changes successfully before finishing editing.");
+      return;
+    }
+
+    if (lockRenewalRef.current) {
+      setMessage("The editing lock is being renewed. Please try Finish Editing again in a moment.");
+      return;
+    }
+
+    finishingRef.current = true;
+
+    try {
+      const response = await fetch(
+        `/api/dashboard/drafts/${encodeURIComponent(cloudDraftId)}/lock`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lockSession: lockSessionRef.current }),
+        }
+      );
+
+      if (!response.ok) {
+        setMessage("Could not release the editing lock. Please try again.");
+        return;
+      }
+
+      setEditLockHeld(false);
+      setMessage("Editing finished. This story is now available for someone else to edit.");
+    } catch {
+      setMessage("Could not contact the server to finish editing. Please try again.");
+    } finally {
+      finishingRef.current = false;
+    }
+  }
 
   async function handleSaveDraft() {
     if (!loaded) {
@@ -41,6 +91,11 @@ export default function NewPostPage() {
       return;
     }
 
+    if (cloudDraftId && (!editLockHeld || revision === null)) {
+      setMessage("Cannot save: editing permission is missing or has expired. Keep this page open to protect your writing.");
+      return;
+    }
+
     if (savingRef.current) return;
     savingRef.current = true;
 
@@ -55,15 +110,25 @@ export default function NewPostPage() {
       const response = await fetch(url, {
         method: cloudDraftId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, story, date, destination, backedUpAt: new Date().toISOString() }),
+        body: JSON.stringify({ title, story, date, destination, revision, lockSession: lockSessionRef.current, backedUpAt: new Date().toISOString() }),
       });
 
       if (!response.ok) {
+        if (response.status === 409 || response.status === 404) {
+          setEditLockHeld(false);
+          throw new Error("EDIT_CONFLICT");
+        }
         throw new Error("Database save failed");
       }
 
       const result = await response.json();
       setCloudDraftId(result.id);
+      if (!cloudDraftId) {
+        setEditLockHeld(true);
+      }
+      if (Number.isSafeInteger(result.revision)) {
+        setRevision(result.revision);
+      }
       if (editVersionRef.current === versionBeingSaved) {
         try {
           localStorage.removeItem(
@@ -81,38 +146,100 @@ export default function NewPostPage() {
         setChangesMade(true);
         setMessage("Newer changes are waiting to be saved.");
       }
-    } catch {
+    } catch (error) {
       setChangesMade(true);
-      setRetryCount((count) => count + 1);
-      setMessage("Not saved to Neon — connection problem. Keep this page open. We will try again automatically.");
+      if (error instanceof Error && error.message === "EDIT_CONFLICT") {
+        setMessage("Save blocked: this story may have changed or its editing lock expired. Your writing remains on this page. Do not close it.");
+      } else {
+        setRetryCount((count) => count + 1);
+        setMessage("Not saved to Neon — connection problem. Keep this page open. We will try again automatically.");
+      }
     } finally {
       savingRef.current = false;
     }
   }
 
   useEffect(() => {
+    if (!cloudDraftId || !editLockHeld) return;
+
+    const timer = window.setInterval(async () => {
+      if (lockRenewalRef.current || finishingRef.current) return;
+      lockRenewalRef.current = true;
+
+      try {
+        const response = await fetch(
+          `/api/dashboard/drafts/${encodeURIComponent(cloudDraftId)}/lock`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lockSession: lockSessionRef.current }),
+          }
+        );
+        if (!response.ok) {
+          setEditLockHeld(false);
+          setMessage("Editing lock lost. Please do not close this page.");
+        }
+      } catch {
+        setEditLockHeld(false);
+        setMessage("Could not renew editing lock. Please do not close this page.");
+      } finally {
+        lockRenewalRef.current = false;
+      }
+    }, 120000);
+
+    return () => window.clearInterval(timer);
+  }, [cloudDraftId, editLockHeld]);
+
+  useEffect(() => {
+    if (!lockSessionRef.current) {
+      lockSessionRef.current = crypto.randomUUID();
+    }
+
     try {
       const params = new URLSearchParams(window.location.search);
       const cloudId = params.get("cloud");
 
       if (cloudId) {
-        fetch(`/api/dashboard/drafts/${encodeURIComponent(cloudId)}`, {
-          cache: "no-store",
+        fetch(`/api/dashboard/drafts/${encodeURIComponent(cloudId)}/lock`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lockSession: lockSessionRef.current }),
         })
+          .then(async (response) => {
+            if (!response.ok) {
+              if (response.status !== 409) {
+                throw new Error("Unable to request editing permission.");
+              }
+              setEditLockHeld(false);
+              setMessage("Read-only: this story is being edited in another session.");
+            } else {
+              setEditLockHeld(true);
+            }
+            return fetch(`/api/dashboard/drafts/${encodeURIComponent(cloudId)}`, {
+              cache: "no-store",
+            });
+          })
           .then(async (response) => {
             if (!response.ok) throw new Error("Unable to open cloud draft");
             return response.json();
           })
           .then(({ draft }) => {
             setCloudDraftId(draft.id);
+            setRevision(draft.revision);
             setTitle(draft.title ?? "");
             setStory(draft.story ?? "");
             setDestination(draft.destination ?? "");
             setDate(draft.date ? String(draft.date).slice(0, 10) : "");
             setLoaded(true);
           })
-          .catch(() => {
-            setMessage("Could not open this Neon draft. Please try again.");
+          .catch((error) => {
+            setEditLockHeld(false);
+            setMessage(
+              error instanceof Error &&
+              error.message.includes("Another person may be editing")
+                ? "This story is currently being edited in another session. Please try again later."
+                : "Could not open this Neon draft. Please try again."
+            );
             setLoaded(false);
           });
         return;
@@ -271,7 +398,7 @@ export default function NewPostPage() {
           Story Title
         </label>
         <input
-          disabled={recoveryAvailable}
+          disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
           id="title"
           className="mt-2 w-full rounded-lg border p-3"
           placeholder="Enter your story title"
@@ -289,7 +416,7 @@ export default function NewPostPage() {
           Story Date
         </label>
         <input
-          disabled={recoveryAvailable}
+          disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
           id="date"
           type="date"
           className="mt-2 rounded-lg border p-3"
@@ -307,7 +434,7 @@ export default function NewPostPage() {
           Destination
         </label>
         <input
-          disabled={recoveryAvailable}
+          disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
           id="destination"
           className="mt-2 w-full rounded-lg border p-3"
           placeholder="Example: Washington, D.C."
@@ -324,28 +451,37 @@ export default function NewPostPage() {
         <label htmlFor="story" className="block font-semibold">
           Your Story
         </label>
-        <textarea
-          disabled={recoveryAvailable}
-          id="story"
-          className="mt-2 min-h-96 w-full rounded-lg border p-4"
-          placeholder="Start writing your travel story..."
+
+        <StoryEditor
           value={story}
-          onChange={(e) => {
-            setStory(e.target.value);
+          disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
+          onChange={(newStory) => {
+            setStory(newStory);
             editVersionRef.current += 1;
             setChangesMade(true);
           }}
         />
-      </div>
-
+     
+ </div>
       <button
         type="button"
         onClick={handleSaveDraft}
-        disabled={!loaded || recoveryAvailable}
+        disabled={!loaded || recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
         className="mt-6 rounded-lg bg-green-800 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         Save Draft
       </button>
+
+      {cloudDraftId && editLockHeld && (
+        <button
+          type="button"
+          onClick={handleFinishEditing}
+          disabled={!loaded || changesMade || recoveryAvailable || savingRef.current}
+          className="ml-3 mt-6 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Finish Editing
+        </button>
+      )}
 
       {message && <p role="status" className="mt-3">{message}</p>}
 
