@@ -8,6 +8,7 @@ type Draft = {
   title: string;
   story: string;
   updated_at: string;
+  published: boolean;
 };
 
 export default function SavedDraftsPage() {
@@ -61,9 +62,9 @@ export default function SavedDraftsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-3xl font-bold">Saved Drafts</h1>
+      <h1 className="text-3xl font-bold">Stories We’re Working On</h1>
       <p className="mt-3">
-        Your travel stories saved securely in Neon.
+        Your shared list of stories ready for editing, saved securely in Neon.
       </p>
 
       {loading && <p className="mt-6">Loading your stories...</p>}
@@ -79,8 +80,11 @@ export default function SavedDraftsPage() {
                 <h2 className="text-xl font-semibold">
                   {draft.title || "Untitled Story"}
                 </h2>
+                <p className="mt-2 text-sm font-semibold">
+                  {draft.published ? "Published" : "Unpublished Draft"}
+                </p>
                 <p className="mt-2">
-                  {draft.story.slice(0, 150) || "No story text yet."}
+                  {draft.story.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 150) || "No story text yet."}
                 </p>
                 <p className="mt-3 text-sm">
                   Saved: {new Date(draft.updated_at).toLocaleString()}
@@ -91,13 +95,7 @@ export default function SavedDraftsPage() {
                 >
                   Continue Writing
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => deleteDraft(draft)}
-                  className="ml-6 text-red-600 underline"
-                >
-                  Delete Draft
-                </button>
+
               </div>
             ))
           )}

@@ -17,8 +17,8 @@ export default function DashboardPage() {
           <p>Continue or update an earlier story.</p>
         </Link>
         <Link href="/dashboard/drafts" className="block rounded-lg border p-6 hover:bg-gray-100">
-          <h2 className="text-xl font-semibold">Saved Drafts</h2>
-          <p>Return to stories that are not yet published.</p>
+          <h2 className="text-xl font-semibold">Stories We're Working On</h2>
+          <p>Return to the stories you and Janice are writing or updating.</p>
         </Link>
       </div>
     </main>

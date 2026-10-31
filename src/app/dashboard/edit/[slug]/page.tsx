@@ -12,7 +12,7 @@ export default async function ExistingStoryPage({
   const { slug } = await params;
   const post = getPostBySlug(slug);
 
-  if (!post || post.draft) {
+  if (!post) {
     notFound();
   }
 

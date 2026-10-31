@@ -67,10 +67,14 @@ export async function GET() {
     const sql = getDatabase();
 
     const rows = await sql`
-      SELECT id, title, content AS story, destination,
-             travel_date AS date, updated_at
-      FROM travel_drafts
-      ORDER BY updated_at DESC
+      SELECT d.id, d.title, d.content AS story, d.destination,
+             d.travel_date AS date, d.updated_at,
+             EXISTS (
+               SELECT 1 FROM travel_published p
+               WHERE p.source_draft_id = d.id
+             ) AS published
+      FROM travel_drafts d
+      ORDER BY d.updated_at DESC
     `;
 
     return NextResponse.json(

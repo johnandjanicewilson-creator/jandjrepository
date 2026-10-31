@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { getDatabase } from "@/lib/db/neon";
+import { getPostBySlug } from "@/lib/posts";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -35,54 +36,40 @@ export async function POST(request: Request) {
 
     const sql = getDatabase();
 
+    const drafts = await sql`
+      SELECT source_slug
+      FROM travel_drafts
+      WHERE id = ${draftId}
+    `;
+
+    if (drafts.length > 0 && drafts[0].source_slug) {
+      const originalPost = getPostBySlug(drafts[0].source_slug);
+
+      if (!originalPost || originalPost.draft) {
+        return NextResponse.json(
+          { error: "This original story is unpublished and cannot be published yet" },
+          { status: 403 }
+        );
+      }
+    }
+
     const rows = await sql`
-      SELECT id, source_slug, title, content,
-             original_metadata, revision
+      INSERT INTO travel_published (
+        slug, title, content, original_metadata,
+        source_draft_id, published_at
+      )
+      SELECT
+        source_slug, title, content, original_metadata,
+        id, NOW()
       FROM travel_drafts
       WHERE id = ${draftId}
         AND locked_by = ${author}
         AND lock_session = ${lockSession}
         AND lock_expires_at > NOW()
         AND revision = ${revision}
-      LIMIT 1
-    `;
-
-    if (rows.length === 0) {
-      return NextResponse.json(
-        { error: "Story changed or editing permission expired" },
-        { status: 409 }
-      );
-    }
-
-    const draft = rows[0];
-
-    if (!draft.source_slug) {
-      return NextResponse.json(
-        { error: "Publishing new stories is not enabled yet" },
-        { status: 400 }
-      );
-    }
-
-    if (!draft.title?.trim() || !draft.content?.trim()) {
-      return NextResponse.json(
-        { error: "Story must have a title and content" },
-        { status: 400 }
-      );
-    }
-
-    await sql`
-      INSERT INTO travel_published (
-        slug, title, content, original_metadata,
-        source_draft_id, published_at
-      )
-      VALUES (
-        ${draft.source_slug},
-        ${draft.title},
-        ${draft.content},
-        ${JSON.stringify(draft.original_metadata)}::jsonb,
-        ${draft.id},
-        NOW()
-      )
+        AND source_slug IS NOT NULL
+        AND LENGTH(TRIM(title)) > 0
+        AND LENGTH(TRIM(content)) > 0
       ON CONFLICT (slug)
       DO UPDATE SET
         title = EXCLUDED.title,
@@ -90,11 +77,19 @@ export async function POST(request: Request) {
         original_metadata = EXCLUDED.original_metadata,
         source_draft_id = EXCLUDED.source_draft_id,
         published_at = NOW()
+      RETURNING slug
     `;
+
+    if (rows.length === 0) {
+      return NextResponse.json(
+        { error: "Story is not ready to publish, or editing permission expired" },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json({
       published: true,
-      slug: draft.source_slug,
+      slug: rows[0].slug,
     });
   } catch {
     return NextResponse.json(

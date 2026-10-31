@@ -2,7 +2,7 @@ import { getAllPosts } from "@/lib/posts";
 import StorySearch from "./StorySearch";
 
 export default function EditExistingPostPage() {
-  const posts = getAllPosts().map((post) => ({
+  const posts = getAllPosts(true).map((post) => ({
     slug: post.slug,
     title: post.title,
     date: String(post.date),

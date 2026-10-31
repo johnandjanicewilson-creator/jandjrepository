@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     const post = getPostBySlug(slug);
-    if (!post || post.draft) {
+    if (!post) {
       return NextResponse.json({ error: "Story not found" }, { status: 404 });
     }
 
