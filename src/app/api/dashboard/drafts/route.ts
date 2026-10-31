@@ -11,13 +11,21 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
-    const { title, story, date, destination, lockSession } = data;
+    const { title, story, date, destination, excerpt, featuredImage, featuredImageAlt, lockSession } = data;
 
     if (
       typeof title !== "string" ||
       typeof story !== "string" ||
       typeof date !== "string" ||
       typeof destination !== "string" ||
+      typeof excerpt !== "string" ||
+      excerpt.length > 1000 ||
+      typeof featuredImage !== "string" ||
+      typeof featuredImageAlt !== "string" ||
+      featuredImage.length > 2000 ||
+      featuredImageAlt.length > 500 ||
+      (featuredImage !== "" &&
+        !/^https:\/\/.+\.cloudinary\.com\//.test(featuredImage)) ||
       typeof lockSession !== "string" ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(lockSession)
     ) {
@@ -42,6 +50,7 @@ export async function POST(request: Request) {
     const rows = await sql`
       INSERT INTO travel_drafts (
         author, title, content, travel_date, destination,
+        original_metadata,
         locked_by, lock_expires_at, lock_session
       )
       VALUES (
@@ -50,6 +59,11 @@ export async function POST(request: Request) {
         ${story},
         ${date || null},
         ${destination},
+        jsonb_build_object(
+          'excerpt', ${excerpt}::text,
+          'featuredImage', ${featuredImage}::text,
+          'featuredImageAlt', ${featuredImageAlt}::text
+        ),
         ${session.user.id},
         NOW() + INTERVAL '5 minutes',
         ${lockSession}

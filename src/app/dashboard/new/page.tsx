@@ -9,6 +9,10 @@ export default function NewPostPage() {
   const [story, setStory] = useState("");
   const [date, setDate] = useState("");
   const [destination, setDestination] = useState("");
+  const [featuredImage, setFeaturedImage] = useState("");
+  const [featuredImageAlt, setFeaturedImageAlt] = useState("");
+  const [featuredPhotoUploading, setFeaturedPhotoUploading] = useState(false);
+  const [excerpt, setExcerpt] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -27,6 +31,9 @@ export default function NewPostPage() {
     story: string;
     date: string;
     destination: string;
+    excerpt?: string;
+    featuredImage?: string;
+    featuredImageAlt?: string;
     backedUpAt: string;
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -85,6 +92,11 @@ export default function NewPostPage() {
       return;
     }
 
+    if (featuredPhotoUploading) {
+      setMessage("Please wait for the featured photograph to finish uploading.");
+      return;
+    }
+
     if (savingRef.current || changesMade || recoveryAvailable) {
       setMessage("Please save your changes successfully before finishing editing.");
       return;
@@ -122,6 +134,11 @@ export default function NewPostPage() {
   }
 
   async function handleSaveDraft() {
+    if (featuredPhotoUploading) {
+      setMessage("Please wait for the featured photograph to finish uploading.");
+      return;
+    }
+
     if (!loaded) {
       setMessage("Please wait until the story has loaded before saving.");
       return;
@@ -156,7 +173,7 @@ export default function NewPostPage() {
       const response = await fetch(url, {
         method: cloudDraftId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, story, date, destination, revision, lockSession: lockSessionRef.current, backedUpAt: new Date().toISOString() }),
+        body: JSON.stringify({ title, story, date, destination, excerpt, featuredImage, featuredImageAlt, revision, lockSession: lockSessionRef.current, backedUpAt: new Date().toISOString() }),
       });
 
       if (!response.ok) {
@@ -276,6 +293,9 @@ export default function NewPostPage() {
             setStory(draft.story ?? "");
             setDestination(draft.destination ?? "");
             setDate(draft.date ? String(draft.date).slice(0, 10) : "");
+            setFeaturedImage(draft.featuredImage ?? "");
+            setFeaturedImageAlt(draft.featuredImageAlt ?? "");
+            setExcerpt(draft.excerpt ?? "");
             setLoaded(true);
           })
           .catch((error) => {
@@ -334,7 +354,13 @@ export default function NewPostPage() {
         backup.title !== title ||
         backup.story !== story ||
         backup.date !== date ||
-        backup.destination !== destination;
+        backup.destination !== destination ||
+        (typeof backup.excerpt === "string" &&
+         backup.excerpt !== excerpt) ||
+        (typeof backup.featuredImage === "string" &&
+         backup.featuredImage !== featuredImage) ||
+        (typeof backup.featuredImageAlt === "string" &&
+         backup.featuredImageAlt !== featuredImageAlt);
 
       if (differs) {
         setRecoveryDraft(backup);
@@ -356,13 +382,16 @@ export default function NewPostPage() {
           story,
           date,
           destination,
+          excerpt,
+          featuredImage,
+          featuredImageAlt,
           backedUpAt: new Date().toISOString()
         })
       );
     } catch {
       // Browser storage may be unavailable.
     }
-  }, [title, story, date, destination, loaded, cloudDraftId]);
+  }, [title, story, date, destination, excerpt, featuredImage, featuredImageAlt, loaded, cloudDraftId]);
 
   useEffect(() => {
     if (!loaded || !changesMade || recoveryAvailable) return;
@@ -372,7 +401,7 @@ export default function NewPostPage() {
     }, 30000);
 
     return () => clearTimeout(timer);
-  }, [loaded, changesMade, title, story, date, destination, retryCount, recoveryAvailable]);
+  }, [loaded, changesMade, title, story, date, destination, excerpt, featuredImage, featuredImageAlt, featuredPhotoUploading, retryCount, recoveryAvailable]);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
@@ -408,6 +437,9 @@ export default function NewPostPage() {
               setStory(recoveryDraft.story);
               setDate(recoveryDraft.date);
               setDestination(recoveryDraft.destination);
+              setExcerpt(recoveryDraft.excerpt ?? "");
+              setFeaturedImage(recoveryDraft.featuredImage ?? "");
+              setFeaturedImageAlt(recoveryDraft.featuredImageAlt ?? "");
               editVersionRef.current += 1;
               setChangesMade(true);
               setRecoveryAvailable(false);
@@ -443,7 +475,11 @@ export default function NewPostPage() {
         </div>
       )}
 
-      <div className="mt-8">
+      <h2 className="mt-8 border-b pb-3 text-2xl font-bold">
+        Story Information
+      </h2>
+
+      <div className="mt-6">
         <label htmlFor="title" className="block font-semibold">
           Story Title
         </label>
@@ -491,6 +527,86 @@ export default function NewPostPage() {
           value={destination}
           onChange={(e) => {
             setDestination(e.target.value);
+            editVersionRef.current += 1;
+            setChangesMade(true);
+          }}
+        />
+      </div>
+
+      <div className="mt-6">
+        <label htmlFor="featured-photo" className="block font-semibold">
+          Featured Photograph (Optional)
+        </label>
+        <p className="mt-1 text-sm text-gray-600">
+          Choose the main photograph for this travel story.
+        </p>
+        <input
+          id="featured-photo"
+          type="file"
+          accept="image/jpeg,image/png"
+          disabled={featuredPhotoUploading || recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
+          className="mt-2 block w-full rounded-lg border p-3"
+          onChange={async (event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            if (!["image/jpeg", "image/png"].includes(file.type) || file.size > 10 * 1024 * 1024) {
+              setMessage("Choose a JPEG or PNG photograph smaller than 10 MB.");
+              event.target.value = "";
+              return;
+            }
+            setFeaturedPhotoUploading(true);
+            setMessage("Uploading featured photograph...");
+            try {
+              const form = new FormData();
+              form.append("file", file);
+              const response = await fetch("/api/dashboard/upload", {
+                method: "POST",
+                body: form,
+              });
+              const result = await response.json();
+              if (!response.ok || typeof result.url !== "string") {
+                throw new Error(result.error || "Photograph upload failed.");
+              }
+              setFeaturedImage(result.url);
+              setFeaturedImageAlt(file.name);
+              editVersionRef.current += 1;
+              setChangesMade(true);
+              setMessage("Featured photograph uploaded. Save Draft to keep it with this story.");
+            } catch (error) {
+              setMessage(error instanceof Error ? error.message : "Photograph upload failed.");
+            } finally {
+              setFeaturedPhotoUploading(false);
+              event.target.value = "";
+            }
+          }}
+        />
+      </div>
+
+      {featuredImage && (
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-semibold">Featured Photograph Preview</p>
+          <img
+            src={featuredImage}
+            alt={featuredImageAlt || "Featured travel photograph"}
+            className="max-h-72 max-w-full rounded-lg border object-contain"
+          />
+        </div>
+      )}
+
+      <div className="mt-6">
+        <label htmlFor="excerpt" className="block font-semibold">
+          Short Introduction (Optional)
+        </label>
+        <textarea
+          id="excerpt"
+          rows={3}
+          maxLength={1000}
+          disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
+          className="mt-2 w-full rounded-lg border p-3"
+          placeholder="A few sentences introducing your travel story"
+          value={excerpt}
+          onChange={(e) => {
+            setExcerpt(e.target.value);
             editVersionRef.current += 1;
             setChangesMade(true);
           }}

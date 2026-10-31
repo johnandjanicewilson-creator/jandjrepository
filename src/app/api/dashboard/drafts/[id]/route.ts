@@ -21,13 +21,21 @@ export async function PUT(
 
   try {
     const data = await request.json();
-    const { title, story, date, destination, revision, lockSession } = data;
+    const { title, story, date, destination, excerpt, featuredImage, featuredImageAlt, revision, lockSession } = data;
 
     if (
       typeof title !== "string" ||
       typeof story !== "string" ||
       typeof date !== "string" ||
       typeof destination !== "string" ||
+      typeof excerpt !== "string" ||
+      excerpt.length > 1000 ||
+      typeof featuredImage !== "string" ||
+      typeof featuredImageAlt !== "string" ||
+      featuredImage.length > 2000 ||
+      featuredImageAlt.length > 500 ||
+      (featuredImage !== "" &&
+        !/^https:\/\/.+\.cloudinary\.com\//.test(featuredImage)) ||
       !Number.isSafeInteger(revision) ||
       revision < 0 ||
       typeof lockSession !== "string" ||
@@ -48,6 +56,19 @@ export async function PUT(
           content = ${story},
           travel_date = ${date || null},
           destination = ${destination},
+          original_metadata = jsonb_set(
+            jsonb_set(
+              jsonb_set(
+                COALESCE(original_metadata, '{}'::jsonb),
+                '{excerpt}',
+                to_jsonb(${excerpt}::text)
+              ),
+              '{featuredImage}',
+              to_jsonb(${featuredImage}::text)
+            ),
+            '{featuredImageAlt}',
+            to_jsonb(${featuredImageAlt}::text)
+          ),
           updated_at = NOW(),
           revision = revision + 1,
           lock_expires_at = NOW() + INTERVAL '5 minutes'
@@ -94,7 +115,10 @@ export async function GET(
 
     const rows = await sql`
       SELECT id, title, content AS story, destination,
-             travel_date AS date, updated_at, revision
+             travel_date AS date, updated_at, revision,
+             original_metadata->>'featuredImage' AS "featuredImage",
+             original_metadata->>'featuredImageAlt' AS "featuredImageAlt",
+             original_metadata->>'excerpt' AS "excerpt"
       FROM travel_drafts
       WHERE id = ${id}
       LIMIT 1
