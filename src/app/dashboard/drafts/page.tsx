@@ -95,7 +95,15 @@ export default function SavedDraftsPage() {
                 >
                   Continue Writing
                 </Link>
-
+                {!draft.published && (
+                  <button
+                    type="button"
+                    onClick={() => void deleteDraft(draft)}
+                    className="ml-6 text-red-700 underline"
+                  >
+                    Delete Draft
+                  </button>
+                )}
               </div>
             ))
           )}

@@ -138,7 +138,16 @@ export async function DELETE(
 
     const rows = await sql`
       DELETE FROM travel_drafts
-      WHERE id = ${id} AND author = ${author}
+      WHERE id = ${id}
+        AND source_slug IS NULL
+        AND (
+          lock_expires_at IS NULL
+          OR lock_expires_at <= NOW()
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM travel_published
+          WHERE source_draft_id = ${id}
+        )
       RETURNING id
     `;
 
