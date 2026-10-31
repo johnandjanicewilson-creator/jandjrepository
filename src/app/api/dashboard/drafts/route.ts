@@ -30,6 +30,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Story information is too long or invalid" }, { status: 400 });
     }
 
+    if (!title.trim() && !story.trim()) {
+      return NextResponse.json(
+        { error: "Please enter a title or some story text first" },
+        { status: 400 }
+      );
+    }
+
     const sql = getDatabase();
 
     const rows = await sql`
