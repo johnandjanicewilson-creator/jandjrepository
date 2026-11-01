@@ -654,6 +654,7 @@ export default function NewPostPage() {
           type="button"
           onClick={handlePublishStory}
           disabled={
+            true ||
             !loaded ||
             changesMade ||
             recoveryAvailable ||
