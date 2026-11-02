@@ -6,6 +6,18 @@ import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
 import StoryEditor from "@/components/editor/StoryEditor";
 
 export default function NewPostPage() {
+  const previewChannelRef = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    const channel = new BroadcastChannel("jj-story-preview");
+    previewChannelRef.current = channel;
+
+    return () => {
+      channel.close();
+      previewChannelRef.current = null;
+    };
+  }, []);
+
   const [title, setTitle] = useState("");
   const [story, setStory] = useState("");
   const [date, setDate] = useState("");
@@ -38,6 +50,36 @@ export default function NewPostPage() {
     backedUpAt: string;
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+
+  const previewDataRef = useRef({
+    title, story, date, destination, featuredImage, featuredImageAlt,
+  });
+
+  previewDataRef.current = {
+    title, story, date, destination, featuredImage, featuredImageAlt,
+  };
+
+  useEffect(() => {
+    const channel = previewChannelRef.current;
+    if (!channel) return;
+
+    const sendPreview = () => {
+      channel.postMessage({
+        type: "story-update",
+        preview: previewDataRef.current,
+      });
+    };
+
+    channel.addEventListener("message", (event) => {
+      if (event.data?.type === "preview-ready") sendPreview();
+    });
+
+    sendPreview();
+
+    const interval = window.setInterval(sendPreview, 1000);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   async function handlePublishStory() {
     if (
@@ -628,6 +670,15 @@ export default function NewPostPage() {
         className="mt-6 rounded-lg bg-green-800 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         Save Draft
+      </button>
+
+      <button
+        type="button"
+        onClick={() => window.open("/dashboard/preview", "_blank")}
+        disabled={!loaded}
+        className="ml-3 mt-6 rounded-lg bg-slate-700 px-6 py-3 font-semibold text-white disabled:opacity-50"
+      >
+        Preview Story
       </button>
 
       {cloudDraftId && editLockHeld && (
