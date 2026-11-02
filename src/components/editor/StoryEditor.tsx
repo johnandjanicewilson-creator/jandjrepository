@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
@@ -38,11 +38,16 @@ export default function StoryEditor({
   onChange,
   disabled = false,
 }: StoryEditorProps) {
+  const [galleryPhotoSelections, setGalleryPhotoSelections] = useState<
+    { position: number; src: string }[]
+  >([]);
+
   const editor = useEditor({
     extensions: [StarterKit, InsetText, SizedImage, PhotoGallery],
     content: value,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
+      setGalleryPhotoSelections([]);
       onChange(editor.getHTML());
     },
     editorProps: {
@@ -114,6 +119,68 @@ export default function StoryEditor({
     };
 
     picker.click();
+  };
+
+  const makeGallery = () => {
+    if (!editor || galleryPhotoSelections.length < 2) return;
+
+    const valid = galleryPhotoSelections.every(({ position, src }) => {
+      const node = editor.state.doc.nodeAt(position);
+      return node?.type.name === "image" && node.attrs.src === src;
+    });
+
+    if (!valid) {
+      window.alert(
+        "The story has changed since you selected the photographs. Please select them again."
+      );
+      setGalleryPhotoSelections([]);
+      return;
+    }
+
+    const selected = galleryPhotoSelections
+      .map(({ position }) => ({
+        position,
+        node: editor.state.doc.nodeAt(position)!,
+      }))
+      .sort((a, b) => a.position - b.position);
+
+    const photos = selected.map(({ node }) => ({
+      src: node.attrs.src,
+      alt: node.attrs.alt || "",
+      photoCaption: node.attrs.photoCaption || "",
+      photoSize: node.attrs.photoSize || "full",
+      photoPosition: node.attrs.photoPosition || "center",
+    }));
+
+    const galleryType = editor.state.schema.nodes.photoGallery;
+    if (!galleryType) return;
+
+    const transaction = editor.state.tr;
+    const firstPosition = selected[0].position;
+
+    for (const { position, node } of [...selected].reverse()) {
+      transaction.delete(position, position + node.nodeSize);
+    }
+
+    const insertionPosition = transaction.mapping.map(firstPosition, -1);
+    const galleryNode = galleryType.create({ photos, caption: "" });
+
+    const insertionPoint = transaction.doc.resolve(insertionPosition);
+
+    if (!insertionPoint.parent.canReplaceWith(
+      insertionPoint.index(),
+      insertionPoint.index(),
+      galleryType
+    )) {
+      window.alert("The gallery cannot be placed here safely.");
+      return;
+    }
+
+    transaction.insert(insertionPosition, galleryNode);
+
+    editor.view.dispatch(transaction);
+    setGalleryPhotoSelections([]);
+
   };
 
   return (
@@ -326,6 +393,45 @@ export default function StoryEditor({
             )}
           </button>
         ))}
+      <button
+        type="button"
+        title="Add selected photograph to gallery"
+        disabled={!editor || !photoSelected || galleryPhotoSelections.length >= 3}
+        onClick={() => {
+          if (!editor || !editor.isActive("image")) return;
+          const { from: position } = editor.state.selection;
+          const node = editor.state.doc.nodeAt(position);
+          if (node?.type.name !== "image") return;
+          const src = node.attrs.src;
+          if (typeof src !== "string" || !src) return;
+          setGalleryPhotoSelections((previous) =>
+            previous.some((photo) => photo.position === position)
+              ? previous
+              : [...previous, { position, src }]
+          );
+        }}
+        className="rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Add to Gallery ({galleryPhotoSelections.length}/3)
+      </button>
+      <button
+        type="button"
+        title="Combine selected photographs into a gallery"
+        disabled={!editor || galleryPhotoSelections.length < 2}
+        onClick={makeGallery}
+        className="rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Make Gallery
+      </button>
+      <button
+        type="button"
+        title="Clear selected gallery photographs"
+        disabled={galleryPhotoSelections.length === 0}
+        onClick={() => setGalleryPhotoSelections([])}
+        className="rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Clear Selection
+      </button>
       <button
         type="button"
         title="Add or edit the selected photograph's caption"
