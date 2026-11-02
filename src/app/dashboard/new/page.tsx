@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getDraft, saveDraft } from "@/lib/dashboard/drafts";
+import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
 import StoryEditor from "@/components/editor/StoryEditor";
 
 export default function NewPostPage() {
@@ -557,17 +558,8 @@ export default function NewPostPage() {
             setFeaturedPhotoUploading(true);
             setMessage("Uploading featured photograph...");
             try {
-              const form = new FormData();
-              form.append("file", file);
-              const response = await fetch("/api/dashboard/upload", {
-                method: "POST",
-                body: form,
-              });
-              const result = await response.json();
-              if (!response.ok || typeof result.url !== "string") {
-                throw new Error(result.error || "Photograph upload failed.");
-              }
-              setFeaturedImage(result.url);
+              const photoUrl = await uploadPhoto(file);
+              setFeaturedImage(photoUrl);
               setFeaturedImageAlt(file.name);
               editVersionRef.current += 1;
               setChangesMade(true);

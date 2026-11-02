@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { SizedImage } from "./SizedImage";
 import { PhotoGallery } from "./PhotoGallery";
+import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
 import { InsetText } from "./InsetText";
 
 type StoryEditorProps = {
@@ -97,21 +98,8 @@ export default function StoryEditor({
         const photos = [];
 
         for (const file of files) {
-          const form = new FormData();
-          form.append("file", file);
-
-          const response = await fetch("/api/dashboard/upload", {
-            method: "POST",
-            body: form,
-          });
-
-          const result = await response.json();
-
-          if (!response.ok) {
-            throw new Error(result.error || "Upload failed");
-          }
-
-          photos.push({ src: result.url, alt: file.name });
+          const photoUrl = await uploadPhoto(file);
+          photos.push({ src: photoUrl, alt: file.name });
         }
 
         editor.chain().focus().insertContentAt(position, {
