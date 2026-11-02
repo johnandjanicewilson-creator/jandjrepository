@@ -43,6 +43,11 @@ export default function StoryEditor({
     { position: number; src: string }[]
   >([]);
 
+  const [galleryToMove, setGalleryToMove] = useState<{
+    position: number;
+    photos: { src: string }[];
+  } | null>(null);
+
   const editor = useEditor({
     extensions: [StarterKit, InsetText, SizedImage, PhotoGallery, PhotoLocationMarker],
     content: value,
@@ -120,6 +125,66 @@ export default function StoryEditor({
     };
 
     picker.click();
+  };
+
+  const startMovingGallery = () => {
+    if (!editor || !editor.isActive("photoGallery")) return;
+
+    const { from } = editor.state.selection;
+    const gallery = editor.state.doc.nodeAt(from);
+
+    if (gallery?.type.name !== "photoGallery") return;
+
+    setGalleryToMove({
+      position: from,
+      photos: gallery.attrs.photos,
+    });
+  };
+
+  const placeMovingGallery = () => {
+    if (!editor || !galleryToMove) return;
+
+    const { doc, selection } = editor.state;
+    const source = doc.nodeAt(galleryToMove.position);
+
+    if (
+      source?.type.name !== "photoGallery" ||
+      JSON.stringify(source.attrs.photos) !==
+        JSON.stringify(galleryToMove.photos)
+    ) {
+      window.alert("The story has changed. Please select the gallery again.");
+      setGalleryToMove(null);
+      return;
+    }
+
+    const destination = selection.from;
+    const resolved = doc.resolve(destination);
+    const insertAt = resolved.depth === 0
+      ? destination
+      : resolved.after(1);
+
+    if (
+      !doc.resolve(insertAt).parent.canReplaceWith(
+        doc.resolve(insertAt).index(),
+        doc.resolve(insertAt).index(),
+        source.type
+      )
+    ) {
+      window.alert("Please place the cursor in a story paragraph.");
+      return;
+    }
+
+    const transaction = editor.state.tr;
+    transaction.delete(
+      galleryToMove.position,
+      galleryToMove.position + source.nodeSize
+    );
+
+    const mappedDestination = transaction.mapping.map(insertAt);
+    transaction.insert(mappedDestination, source);
+
+    editor.view.dispatch(transaction);
+    setGalleryToMove(null);
   };
 
   const separateGallery = () => {
@@ -539,6 +604,33 @@ export default function StoryEditor({
         className="rounded border px-3 py-2 disabled:opacity-40"
       >
         Separate Gallery
+      </button>
+      <button
+        type="button"
+        title="Select this gallery for moving"
+        disabled={!editor || !gallerySelected || !!galleryToMove}
+        onClick={startMovingGallery}
+        className="rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Move Gallery
+      </button>
+      <button
+        type="button"
+        title="Place the gallery at the cursor"
+        disabled={!editor || !galleryToMove}
+        onClick={placeMovingGallery}
+        className="rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Place Gallery
+      </button>
+      <button
+        type="button"
+        title="Cancel moving the gallery"
+        disabled={!galleryToMove}
+        onClick={() => setGalleryToMove(null)}
+        className="rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Cancel Move
       </button>
       <button
         type="button"
