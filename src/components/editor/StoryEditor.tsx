@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { SizedImage } from "./SizedImage";
 import { PhotoGallery } from "./PhotoGallery";
+import { PhotoLocationMarker } from "./PhotoLocationMarker";
 import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
 import { InsetText } from "./InsetText";
 
@@ -43,7 +44,7 @@ export default function StoryEditor({
   >([]);
 
   const editor = useEditor({
-    extensions: [StarterKit, InsetText, SizedImage, PhotoGallery],
+    extensions: [StarterKit, InsetText, SizedImage, PhotoGallery, PhotoLocationMarker],
     content: value,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
@@ -121,6 +122,74 @@ export default function StoryEditor({
     picker.click();
   };
 
+  const separateGallery = () => {
+    if (!editor || !editor.isActive("photoGallery")) return;
+
+    const { from } = editor.state.selection;
+    const gallery = editor.state.doc.nodeAt(from);
+    if (gallery?.type.name !== "photoGallery") return;
+
+    const photos = gallery.attrs.photos;
+    if (!Array.isArray(photos) || photos.length < 2) return;
+
+    const imageType = editor.state.schema.nodes.image;
+    if (!imageType) return;
+
+    const locations: { position: number; photo: any }[] = [];
+
+    editor.state.doc.descendants((node, position) => {
+      if (node.type.name !== "photoLocationMarker") return;
+
+      const photo = photos.find(
+        (item) => item.markerId && item.markerId === node.attrs.markerId
+      );
+
+      if (photo) locations.push({ position, photo });
+    });
+
+    if (
+      locations.length !== photos.length ||
+      photos.some((photo) => !photo.markerId) ||
+      new Set(photos.map((photo) => photo.markerId)).size !== photos.length ||
+      new Set(locations.map((item) => item.position)).size !== photos.length
+    ) {
+      window.alert(
+        "Original photograph locations are unavailable. No changes were made."
+      );
+      return;
+    }
+
+    const transaction = editor.state.tr;
+
+    for (const { position, photo } of [...locations].sort(
+      (a, b) => b.position - a.position
+    )) {
+      const currentPosition = transaction.mapping.map(position);
+      const marker = transaction.doc.nodeAt(currentPosition);
+      if (!marker || marker.type.name !== "photoLocationMarker") return;
+
+      transaction.replaceWith(
+        currentPosition,
+        currentPosition + marker.nodeSize,
+        imageType.create({
+          src: photo.src,
+          alt: photo.alt || "",
+          photoCaption: photo.photoCaption || "",
+          photoSize: photo.photoSize || "full",
+          photoPosition: photo.photoPosition || "center",
+        })
+      );
+    }
+
+    const galleryPosition = transaction.mapping.map(from);
+    transaction.delete(
+      galleryPosition,
+      galleryPosition + gallery.nodeSize
+    );
+
+    editor.view.dispatch(transaction);
+  };
+
   const makeGallery = () => {
     if (!editor || galleryPhotoSelections.length < 2) return;
 
@@ -144,7 +213,8 @@ export default function StoryEditor({
       }))
       .sort((a, b) => a.position - b.position);
 
-    const photos = selected.map(({ node }) => ({
+    const photos = selected.map(({ position, node }) => ({
+      originalPosition: position,
       src: node.attrs.src,
       alt: node.attrs.alt || "",
       photoCaption: node.attrs.photoCaption || "",
@@ -158,11 +228,40 @@ export default function StoryEditor({
     const transaction = editor.state.tr;
     const firstPosition = selected[0].position;
 
-    for (const { position, node } of [...selected].reverse()) {
-      transaction.delete(position, position + node.nodeSize);
+    const markerType = editor.state.schema.nodes.photoLocationMarker;
+    if (!markerType) return;
+
+    const markerIds = selected.map(() => crypto.randomUUID());
+
+    photos.forEach((photo, index) => {
+      Object.assign(photo, { markerId: markerIds[index] });
+    });
+
+    for (let i = selected.length - 1; i >= 0; i--) {
+      const { position, node } = selected[i];
+      transaction.replaceWith(
+        position,
+        position + node.nodeSize,
+        markerType.create({ markerId: markerIds[i] })
+      );
     }
 
-    const insertionPosition = transaction.mapping.map(firstPosition, -1);
+    let insertionPosition = -1;
+
+    transaction.doc.descendants((node, position) => {
+      if (
+        insertionPosition === -1 &&
+        node.type.name === "photoLocationMarker" &&
+        node.attrs.markerId === markerIds[0]
+      ) {
+        insertionPosition = position + node.nodeSize;
+      }
+    });
+
+    if (insertionPosition === -1) {
+      window.alert("The original photograph location could not be found.");
+      return;
+    }
     const galleryNode = galleryType.create({ photos, caption: "" });
 
     const insertionPoint = transaction.doc.resolve(insertionPosition);
@@ -431,6 +530,15 @@ export default function StoryEditor({
         className="rounded border px-3 py-2 disabled:opacity-40"
       >
         Clear Selection
+      </button>
+      <button
+        type="button"
+        title="Separate the selected gallery into individual photographs"
+        disabled={!editor || !gallerySelected}
+        onClick={separateGallery}
+        className="rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Separate Gallery
       </button>
       <button
         type="button"
