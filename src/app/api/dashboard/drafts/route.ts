@@ -101,7 +101,17 @@ export async function GET() {
           AND p.publication_approved = true
           AND p.title IS NOT DISTINCT FROM d.title
           AND p.content IS NOT DISTINCT FROM d.content
-          AND p.original_metadata IS NOT DISTINCT FROM d.original_metadata
+          AND (p.original_metadata->>'excerpt') IS NOT DISTINCT FROM (d.original_metadata->>'excerpt')
+          AND (p.original_metadata->>'featuredImage') IS NOT DISTINCT FROM (d.original_metadata->>'featuredImage')
+          AND (p.original_metadata->>'featuredImageAlt') IS NOT DISTINCT FROM (d.original_metadata->>'featuredImageAlt')
+          AND (
+            d.source_slug IS NOT NULL OR
+            (p.original_metadata->>'destination') IS NOT DISTINCT FROM d.destination
+          )
+          AND (
+            d.source_slug IS NOT NULL OR
+            (p.original_metadata->>'date') IS NOT DISTINCT FROM d.travel_date::text
+          )
       )
       ORDER BY d.updated_at DESC
     `;

@@ -20,12 +20,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid story" }, { status: 400 });
     }
 
+    const sql = getDatabase();
+    if (slug.startsWith("story-")) {
+      const published = await sql`
+        SELECT source_draft_id FROM travel_published
+        WHERE slug = ${slug} AND publication_approved = true
+        LIMIT 1
+      `;
+      if (published.length && published[0].source_draft_id) {
+        return NextResponse.json({ id: published[0].source_draft_id });
+      }
+    }
+
     const post = getPostBySlug(slug);
     if (!post) {
       return NextResponse.json({ error: "Story not found" }, { status: 404 });
     }
-
-    const sql = getDatabase();
 
     const existing = await sql`
       SELECT id FROM travel_drafts WHERE source_slug = ${slug}
