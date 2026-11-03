@@ -83,10 +83,41 @@ export async function POST(request: Request) {
     `;
 
     if (rows.length === 0) {
-      return NextResponse.json(
-        { error: "Story is not ready to publish, or editing permission expired" },
-        { status: 409 }
-      );
+      const current = await sql`
+        SELECT source_slug, title, content, revision,
+               locked_by, lock_session,
+               (lock_expires_at > NOW()) AS lock_active
+        FROM travel_drafts
+        WHERE id = ${draftId}
+        LIMIT 1
+      `;
+
+      if (!current.length) {
+        return NextResponse.json(
+          { error: "Saved story not found. Please reopen it from the dashboard." },
+          { status: 404 }
+        );
+      }
+
+      const draft = current[0];
+      let error: string;
+
+      if (!draft.source_slug) {
+        error = "This draft is not linked to an existing story.";
+      } else if (!String(draft.title ?? "").trim() ||
+                 !String(draft.content ?? "").trim()) {
+        error = "The story needs a title and text before publishing.";
+      } else if (Number(draft.revision) !== revision) {
+        error = "The saved revision has changed. Reopen the story before publishing.";
+      } else if (draft.locked_by !== author ||
+                 draft.lock_session !== lockSession ||
+                 !draft.lock_active) {
+        error = "Editing permission expired or belongs to another session. Reopen the story.";
+      } else {
+        error = "Publishing encountered a conflicting update.";
+      }
+
+      return NextResponse.json({ error }, { status: 409 });
     }
 
     return NextResponse.json({
