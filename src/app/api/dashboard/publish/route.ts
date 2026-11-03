@@ -57,11 +57,11 @@ export async function POST(request: Request) {
     const rows = await sql`
       INSERT INTO travel_published (
         slug, title, content, original_metadata,
-        source_draft_id, published_at
+        source_draft_id, published_at, publication_approved
       )
       SELECT
         source_slug, title, content, original_metadata,
-        id, NOW()
+        id, NOW(), true
       FROM travel_drafts
       WHERE id = ${draftId}
         AND (
@@ -78,7 +78,8 @@ export async function POST(request: Request) {
         content = EXCLUDED.content,
         original_metadata = EXCLUDED.original_metadata,
         source_draft_id = EXCLUDED.source_draft_id,
-        published_at = NOW()
+        published_at = NOW(),
+        publication_approved = true
       RETURNING slug
     `;
 

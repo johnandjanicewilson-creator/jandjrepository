@@ -8,6 +8,7 @@ export async function getPublishedStory(slug: string) {
     SELECT slug, title, content, original_metadata, published_at
     FROM travel_published
     WHERE slug = ${slug}
+      AND publication_approved = true
     LIMIT 1
   `;
 
