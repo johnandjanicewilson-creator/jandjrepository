@@ -5,7 +5,7 @@ import StorySearch from "./StorySearch";
 export const dynamic = "force-dynamic";
 
 export default async function EditExistingPostPage() {
-  const originals = getAllPosts(true).map((post) => ({
+  const originals = getAllPosts().map((post) => ({
     slug: post.slug,
     title: post.title,
     date: String(post.date),
@@ -15,9 +15,12 @@ export default async function EditExistingPostPage() {
   const sql = getDatabase();
   const published = await sql`
     SELECT p.slug, p.title,
-           COALESCE(p.original_metadata->>'date', '') AS date,
-           COALESCE(p.original_metadata->>'destination', '') AS destination
+           COALESCE(NULLIF(p.original_metadata->>'date', ''),
+                    d.travel_date::text, '') AS date,
+           COALESCE(NULLIF(p.original_metadata->>'destination', ''),
+                    d.destination, '') AS destination
     FROM travel_published p
+    LEFT JOIN travel_drafts d ON d.id = p.source_draft_id
     WHERE p.publication_approved = true
       AND p.slug LIKE 'story-%'
   `;
@@ -33,5 +36,6 @@ export default async function EditExistingPostPage() {
       });
     }
   }
+  posts.sort((a, b) => b.date.localeCompare(a.date) || a.title.localeCompare(b.title));
   return <StorySearch posts={posts} />;
 }
