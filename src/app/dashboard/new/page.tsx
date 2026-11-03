@@ -711,7 +711,7 @@ export default function NewPostPage() {
       {message && <p role="status" className="mt-3">{message}</p>}
 
       <p className="mt-4 text-sm">
-        Your changes are automatically saved to Neon while you write. Publishing is not available yet.
+        Your changes are automatically saved to Neon while you write. Publishing requires your confirmation.
       </p>
     </main>
   );
