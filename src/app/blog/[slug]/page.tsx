@@ -59,6 +59,14 @@ export default async function PostPage({ params }: PostPageProps) {
   const related = getRelatedPosts(post);
   const published = await getPublishedStory(slug);
 
+  const publishedMetadata = (published?.original_metadata ?? {}) as Record<string, unknown>;
+  const publishedTitle = published && typeof published.title === "string"
+    ? published.title : post.title;
+  const publishedImage = published && typeof publishedMetadata.featuredImage === "string" && publishedMetadata.featuredImage
+    ? publishedMetadata.featuredImage : post.featuredImage;
+  const publishedImageAlt = published && typeof publishedMetadata.featuredImageAlt === "string"
+    ? publishedMetadata.featuredImageAlt : (post.featuredImageAlt ?? post.title);
+
   const body = published ? (
     <PostContent html={published.content as string} />
   ) : post.format === "mdx" ? (
@@ -71,8 +79,8 @@ export default async function PostPage({ params }: PostPageProps) {
     <article className="blog-post w-full">
       <div className="relative h-[45vh] min-h-[320px] w-full">
         <Image
-          src={post.featuredImage}
-          alt={post.featuredImageAlt ?? post.title}
+          src={publishedImage}
+          alt={publishedImageAlt}
           fill
           priority
           className="object-cover"
@@ -97,7 +105,7 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
 
           <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-sage sm:text-5xl lg:text-6xl">
-            {post.title}
+            {publishedTitle}
           </h1>
 
           <div className="mt-6 flex flex-wrap gap-2">
@@ -124,7 +132,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
         <SeriesBanner series={post.series} />
 
-        {post.gallery && post.gallery.length > 0 && (
+        {!published && post.gallery && post.gallery.length > 0 && (
           <div className="mt-10">
             <ImageGallery images={post.gallery} />
           </div>
