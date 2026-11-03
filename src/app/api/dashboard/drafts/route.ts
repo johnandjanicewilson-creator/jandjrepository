@@ -95,6 +95,13 @@ export async function GET() {
                WHERE p.source_draft_id = d.id
              ) AS published
       FROM travel_drafts d
+      WHERE NOT EXISTS (
+        SELECT 1 FROM travel_published p
+        WHERE p.source_draft_id = d.id
+          AND p.title IS NOT DISTINCT FROM d.title
+          AND p.content IS NOT DISTINCT FROM d.content
+          AND p.original_metadata IS NOT DISTINCT FROM d.original_metadata
+      )
       ORDER BY d.updated_at DESC
     `;
 

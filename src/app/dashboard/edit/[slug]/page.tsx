@@ -3,6 +3,8 @@ import EditStoryButton from "./EditStoryButton";
 import { notFound } from "next/navigation";
 import { getPostBySlug } from "@/lib/posts";
 import { markdownToHtml } from "@/lib/markdown";
+import { getPublishedStory } from "@/lib/publishing/getPublishedStory";
+import { PostContent } from "@/components/blog/PostContent";
 
 export default async function ExistingStoryPage({
   params,
@@ -16,7 +18,10 @@ export default async function ExistingStoryPage({
     notFound();
   }
 
-  const storyHtml = await markdownToHtml(post.content);
+  const published = await getPublishedStory(slug);
+  const storyHtml = published
+    ? String(published.content)
+    : await markdownToHtml(post.content);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
@@ -40,10 +45,9 @@ export default async function ExistingStoryPage({
 
       <EditStoryButton slug={slug} />
 
-      <article
-        className="prose mt-8 max-w-none"
-        dangerouslySetInnerHTML={{ __html: storyHtml }}
-      />
+      <article className="mt-8">
+        <PostContent html={storyHtml} />
+      </article>
     </main>
   );
 }

@@ -85,9 +85,7 @@ export default function NewPostPage() {
     if (
       !loaded ||
       !cloudDraftId ||
-      !editLockHeld ||
       revision === null ||
-      !lockSessionRef.current ||
       changesMade ||
       recoveryAvailable ||
       savingRef.current ||
@@ -110,7 +108,7 @@ export default function NewPostPage() {
         body: JSON.stringify({
           draftId: cloudDraftId,
           revision,
-          lockSession: lockSessionRef.current
+          lockSession: null
         })
       });
 

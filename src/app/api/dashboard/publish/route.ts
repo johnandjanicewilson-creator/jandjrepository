@@ -25,8 +25,9 @@ export async function POST(request: Request) {
       !uuidPattern.test(draftId) ||
       !Number.isSafeInteger(revision) ||
       revision < 0 ||
-      typeof lockSession !== "string" ||
-      !uuidPattern.test(lockSession)
+      (lockSession !== null &&
+        (typeof lockSession !== "string" ||
+         !uuidPattern.test(lockSession)))
     ) {
       return NextResponse.json(
         { error: "Invalid publishing request" },
@@ -63,9 +64,10 @@ export async function POST(request: Request) {
         id, NOW()
       FROM travel_drafts
       WHERE id = ${draftId}
-        AND locked_by = ${author}
-        AND lock_session = ${lockSession}
-        AND lock_expires_at > NOW()
+        AND (
+          locked_by IS NULL
+          OR lock_expires_at <= NOW()
+        )
         AND revision = ${revision}
         AND source_slug IS NOT NULL
         AND LENGTH(TRIM(title)) > 0
