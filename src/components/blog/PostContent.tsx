@@ -1,3 +1,5 @@
+import sanitizeHtml from "sanitize-html";
+
 interface PostContentProps {
   html: string;
 }
@@ -59,7 +61,34 @@ export function PostContent({ html }: PostContentProps) {
   return (
     <div
       className="prose-travel w-full"
-      dangerouslySetInnerHTML={{ __html: galleryHtml }}
+      dangerouslySetInnerHTML={{
+        __html: sanitizeHtml(galleryHtml, {
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "figure", "figcaption"]),
+          allowedAttributes: {
+            ...sanitizeHtml.defaults.allowedAttributes,
+            "*": ["class", "style"],
+            img: ["src", "alt", "width", "height", "loading"],
+            a: ["href", "name", "target", "rel"],
+          },
+          allowedStyles: {
+            "*": {
+              "text-align": [/^(left|right|center)$/],
+              "margin": [/^[0-9.]+(px|rem|em|%)?(\s+[0-9.]+(px|rem|em|%)?)*$/],
+              "margin-top": [/^[0-9.]+(px|rem|em|%)$/],
+              "max-width": [/^[0-9.]+(px|rem|em|%)$/],
+              "display": [/^(grid|block|inline-block|flex)$/],
+              "grid-template-columns": [/^repeat\([23],minmax\(0,1fr\)\)$/],
+              "gap": [/^[0-9.]+px$/],
+              "width": [/^[0-9.]+%$/],
+              "height": [/^[0-9.]+px$/],
+              "object-fit": [/^(cover|contain)$/],
+              "border-radius": [/^[0-9.]+px$/],
+              "font-size": [/^[0-9.]+rem$/],
+              "font-style": [/^italic$/],
+            },
+          },
+        })
+      }}
     />
   );
 }
