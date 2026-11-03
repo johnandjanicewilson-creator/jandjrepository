@@ -144,7 +144,7 @@ export default function NewPostPage() {
     }
 
     if (lockRenewalRef.current) {
-      setMessage("The editing lock is being renewed. Please try Finish Editing again in a moment.");
+      setMessage("The editing lock is being renewed. Please try Save & Close Editor again in a moment.");
       return;
     }
 
@@ -166,7 +166,7 @@ export default function NewPostPage() {
       }
 
       setEditLockHeld(false);
-      setMessage("Editing finished. This story is now available for someone else to edit.");
+      window.location.assign("/dashboard/drafts");
     } catch {
       setMessage("Could not contact the server to finish editing. Please try again.");
     } finally {
@@ -686,7 +686,7 @@ export default function NewPostPage() {
           disabled={!loaded || changesMade || recoveryAvailable || savingRef.current}
           className="ml-3 mt-6 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Finish Editing
+          Save & Close Editor
         </button>
       )}
 
@@ -695,11 +695,12 @@ export default function NewPostPage() {
           type="button"
           onClick={handlePublishStory}
           disabled={
-            true ||
             !loaded ||
             changesMade ||
             recoveryAvailable ||
-            revision === null
+            revision === null ||
+            savingRef.current ||
+            lockRenewalRef.current
           }
           className="ml-3 mt-6 rounded-lg bg-amber-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
