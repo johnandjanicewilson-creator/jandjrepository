@@ -108,7 +108,7 @@ export default function NewPostPage() {
         body: JSON.stringify({
           draftId: cloudDraftId,
           revision,
-          lockSession: null
+          lockSession: lockSessionRef.current
         })
       });
 

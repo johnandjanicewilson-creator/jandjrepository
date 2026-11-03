@@ -64,10 +64,9 @@ export async function POST(request: Request) {
         id, NOW(), true
       FROM travel_drafts
       WHERE id = ${draftId}
-        AND (
-          locked_by IS NULL
-          OR lock_expires_at <= NOW()
-        )
+        AND locked_by = ${author}
+        AND lock_session = ${lockSession}
+        AND lock_expires_at > NOW()
         AND revision = ${revision}
         AND source_slug IS NOT NULL
         AND LENGTH(TRIM(title)) > 0
