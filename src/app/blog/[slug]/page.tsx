@@ -16,6 +16,8 @@ import {
 } from "@/lib/posts";
 import { formatDate, getPostDisplayDate } from "@/lib/utils";
 import type { Metadata } from "next";
+import type { Post } from "@/lib/types";
+import readingTime from "reading-time";
 
 export const dynamic = "force-dynamic";
 
@@ -31,33 +33,48 @@ export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
-
-  if (!post) return { title: "Post not found" };
-
+  const original = getPostBySlug(slug);
+  const published = await getPublishedStory(slug);
+  if (!original && !published) return { title: "Post not found" };
+  const meta = (published?.original_metadata ?? {}) as Record<string, unknown>;
+  const title = published ? String(published.title) : original!.title;
+  const description = typeof meta.excerpt === "string" ? meta.excerpt : (original?.excerpt ?? "");
+  const image = typeof meta.featuredImage === "string" && meta.featuredImage
+    ? meta.featuredImage : (original?.featuredImage ?? "");
+  const date = original?.date ?? (typeof meta.date === "string" ? meta.date : "");
   return {
-    title: post.title,
-    description: post.excerpt,
+    title, description,
     alternates: { canonical: `/blog/${slug}` },
     openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      images: [{ url: post.featuredImage, alt: post.featuredImageAlt ?? post.title }],
+      title, description,
+      ...(image ? { images: [{ url: image, alt: title }] } : {}),
       type: "article",
-      publishedTime: post.date,
+      ...(date ? { publishedTime: date } : {}),
     },
   };
+
 }
 
 export default async function PostPage({ params }: PostPageProps) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
-
-  if (!post) notFound();
-
-  const displayDate = getPostDisplayDate(post);
-  const related = getRelatedPosts(post);
+  const original = getPostBySlug(slug);
   const published = await getPublishedStory(slug);
+  if (!original && !published) notFound();
+  const newMeta = (published?.original_metadata ?? {}) as Record<string, unknown>;
+  const newDate = typeof newMeta.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(newMeta.date)
+    ? newMeta.date : published ? new Date(published.published_at as string).toISOString().slice(0, 10) : "";
+  const post: Post = original ?? {
+    slug, title: String(published!.title), content: String(published!.content),
+    format: "md", readingTime: readingTime(String(published!.content).replace(/<[^>]*>/g, " ")).text,
+    date: newDate, year: Number(newDate.slice(0, 4)),
+    destination: typeof newMeta.destination === "string" ? newMeta.destination : "Travel",
+    excerpt: typeof newMeta.excerpt === "string" ? newMeta.excerpt : "",
+    featuredImage: typeof newMeta.featuredImage === "string" ? newMeta.featuredImage : "",
+    featuredImageAlt: typeof newMeta.featuredImageAlt === "string" ? newMeta.featuredImageAlt : "",
+    categories: [], tags: [],
+  };
+  const displayDate = getPostDisplayDate(post);
+  const related = original ? getRelatedPosts(post) : [];
 
   const publishedMetadata = (published?.original_metadata ?? {}) as Record<string, unknown>;
   const publishedTitle = published && typeof published.title === "string"
@@ -77,7 +94,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <article className="blog-post w-full">
-      <div className="relative h-[45vh] min-h-[320px] w-full">
+      {publishedImage && <div className="relative h-[45vh] min-h-[320px] w-full">
         <Image
           src={publishedImage}
           alt={publishedImageAlt}
@@ -87,7 +104,7 @@ export default async function PostPage({ params }: PostPageProps) {
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-      </div>
+      </div>}
 
       <section className="post-content-area">
         <header>

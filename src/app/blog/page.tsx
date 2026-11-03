@@ -3,7 +3,10 @@ import { PostCard } from "@/components/blog/PostCard";
 import { BlogFilters } from "@/components/blog/BlogFilters";
 import { BlogNav } from "@/components/blog/BlogNav";
 import { Container } from "@/components/ui/Container";
-import { getBlogPageData } from "@/lib/posts";
+import { getBlogPageData, filterPostsFromList } from "@/lib/posts";
+import { getNewPublishedStories } from "@/lib/publishing/getPublishedStory";
+import type { Post } from "@/lib/types";
+import readingTime from "reading-time";
 
 interface BlogPageProps {
   searchParams: Promise<{
@@ -20,15 +23,41 @@ export const metadata = {
   alternates: { canonical: "/blog" },
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const params = await searchParams;
-  const { posts, destinations, years, categories, tags, allPosts } =
-    getBlogPageData({
-      destination: params.destination,
-      year: params.year ? Number(params.year) : undefined,
-      category: params.category,
-      tag: params.tag,
-    });
+  const original = getBlogPageData({});
+  const published = await getNewPublishedStories();
+  const newPosts: Post[] = published.map((row) => {
+    const meta = (row.original_metadata ?? {}) as Record<string, unknown>;
+    const date = typeof meta.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(meta.date)
+      ? meta.date : new Date(row.published_at as string).toISOString().slice(0, 10);
+    const destination = typeof meta.destination === "string" ? meta.destination : "Travel";
+    const content = String(row.content ?? "");
+    return {
+      slug: String(row.slug), title: String(row.title), content,
+      format: "md" as const, readingTime: readingTime(content.replace(/<[^>]*>/g, " ")).text,
+      date, year: Number(date.slice(0, 4)), destination,
+      excerpt: typeof meta.excerpt === "string" ? meta.excerpt : "",
+      featuredImage: typeof meta.featuredImage === "string" ? meta.featuredImage : "",
+      featuredImageAlt: typeof meta.featuredImageAlt === "string" ? meta.featuredImageAlt : "",
+      categories: [], tags: [],
+    };
+  });
+  const allPosts = [...newPosts, ...original.allPosts].sort(
+    (a, b) => b.date.localeCompare(a.date)
+  );
+  const posts = filterPostsFromList(allPosts, {
+    destination: params.destination,
+    year: params.year ? Number(params.year) : undefined,
+    category: params.category,
+    tag: params.tag,
+  });
+  const destinations = [...new Set(allPosts.map(p => p.destination))].sort();
+  const years = [...new Set(allPosts.map(p => p.year))].sort((a,b) => b-a);
+  const categories = [...new Set(allPosts.flatMap(p => p.categories))].sort();
+  const tags = [...new Set(allPosts.flatMap(p => p.tags))].sort();
 
   return (
     <Container className="py-12 lg:py-16">

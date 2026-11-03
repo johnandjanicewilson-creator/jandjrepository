@@ -22,14 +22,18 @@ export function PostCard({ post, featured = false }: PostCardProps) {
         href={`/blog/${post.slug}`}
         className={featured ? "relative aspect-[4/3] md:aspect-auto md:min-h-[320px]" : "relative aspect-[16/10]"}
       >
-        <Image
-          src={post.featuredImage}
-          alt={post.featuredImageAlt ?? post.title}
-          fill
-          className="object-cover transition duration-500 group-hover:scale-105"
-          sizes={featured ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 33vw"}
-          priority={featured}
-        />
+        {post.featuredImage ? (
+          <Image
+            src={post.featuredImage}
+            alt={post.featuredImageAlt ?? post.title}
+            fill
+            className="object-cover transition duration-500 group-hover:scale-105"
+            sizes={featured ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 33vw"}
+            priority={featured}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-sage-light" />
+        )}
         <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-sage backdrop-blur">
           {post.destination}
         </span>

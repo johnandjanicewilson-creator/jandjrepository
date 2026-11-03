@@ -60,7 +60,13 @@ export async function POST(request: Request) {
         source_draft_id, published_at, publication_approved
       )
       SELECT
-        source_slug, title, content, original_metadata,
+        COALESCE(source_slug, 'story-' || id::text),
+        title, content,
+        CASE WHEN source_slug IS NULL THEN
+          COALESCE(original_metadata, '{}'::jsonb) ||
+          jsonb_build_object('destination', destination,
+                             'date', travel_date::text)
+        ELSE original_metadata END,
         id, NOW(), true
       FROM travel_drafts
       WHERE id = ${draftId}
@@ -68,7 +74,6 @@ export async function POST(request: Request) {
         AND lock_session = ${lockSession}
         AND lock_expires_at > NOW()
         AND revision = ${revision}
-        AND source_slug IS NOT NULL
         AND LENGTH(TRIM(title)) > 0
         AND LENGTH(TRIM(content)) > 0
       ON CONFLICT (slug)
@@ -102,9 +107,7 @@ export async function POST(request: Request) {
       const draft = current[0];
       let error: string;
 
-      if (!draft.source_slug) {
-        error = "This draft is not linked to an existing story.";
-      } else if (!String(draft.title ?? "").trim() ||
+      if (!String(draft.title ?? "").trim() ||
                  !String(draft.content ?? "").trim()) {
         error = "The story needs a title and text before publishing.";
       } else if (Number(draft.revision) !== revision) {
