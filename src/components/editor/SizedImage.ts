@@ -35,6 +35,17 @@ export const SizedImage = Image.extend({
           };
         },
       },
+      photoWidth: {
+        default: null,
+        parseHTML: (element) => {
+          const value = element.getAttribute("data-photo-width");
+          return value && /^[0-9]+$/.test(value) ? Number(value) : null;
+        },
+        renderHTML: (attributes) =>
+          attributes.photoWidth
+            ? { "data-photo-width": String(attributes.photoWidth) }
+            : {},
+      },
       photoSize: {
         default: "full",
         parseHTML: (element) =>
@@ -42,13 +53,15 @@ export const SizedImage = Image.extend({
         renderHTML: (attributes) => ({
           "data-photo-size": attributes.photoSize,
           style: `width: ${
-            {
-              small: "25%",
-              medium: "50%",
-              large: "75%",
-              full: "100%",
-            }[attributes.photoSize as string] || "100%"
-          }; height: auto;`,
+            attributes.photoWidth
+              ? `${attributes.photoWidth}px`
+              : ({
+                  small: "25%",
+                  medium: "50%",
+                  large: "75%",
+                  full: "100%",
+                }[attributes.photoSize as string] || "100%")
+          }; max-width: 100%; height: auto;`,
         }),
       },
     };

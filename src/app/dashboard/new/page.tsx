@@ -33,6 +33,17 @@ export default function NewPostPage() {
   const [revision, setRevision] = useState<number | null>(null);
   const [editLockHeld, setEditLockHeld] = useState(false);
   const lockSessionRef = useRef<string | null>(null);
+  const originalStoryRef = useRef<{
+    title: string;
+    story: string;
+    date: string;
+    destination: string;
+    excerpt: string;
+    featuredImage: string;
+    featuredImageAlt: string;
+    revision: number;
+  } | null>(null);
+  const cancellingRef = useRef(false);
   const savingRef = useRef(false);
   const lockRenewalRef = useRef(false);
   const finishingRef = useRef(false);
@@ -125,6 +136,75 @@ export default function NewPostPage() {
     }
   }
 
+  async function handleCancelEditing() {
+    if (cancellingRef.current || finishingRef.current) return;
+
+    if (!window.confirm("Discard all changes made during this editing session?")) {
+      return;
+    }
+
+    if (savingRef.current || lockRenewalRef.current || featuredPhotoUploading) {
+      setMessage("A save, lock renewal, or photo upload is still running. Please try Cancel again in a moment.");
+      return;
+    }
+
+    if (!loaded) {
+      setMessage("Please wait until the editor has loaded.");
+      return;
+    }
+
+    cancellingRef.current = true;
+    setMessage("Preparing to discard changes...");
+
+    try {
+      if (!cloudDraftId) {
+        try {
+          localStorage.removeItem("jj-travel-backup-new");
+        } catch {
+          // Browser storage may be unavailable.
+        }
+        window.location.assign("/dashboard/drafts");
+        return;
+      }
+
+      if (!editLockHeld || revision === null || !lockSessionRef.current) {
+        setMessage("Editing lock is missing. No changes were discarded.");
+        return;
+      }
+
+      const response = await fetch(
+        `/api/dashboard/drafts/${encodeURIComponent(cloudDraftId)}/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lockSession: lockSessionRef.current,
+            revision
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        setMessage("Cancel could not be completed safely. Your story was not discarded.");
+        return;
+      }
+
+      try {
+        localStorage.removeItem(`jj-travel-backup-${cloudDraftId}`);
+        localStorage.removeItem("jj-travel-backup-new");
+      } catch {
+        // Browser storage may be unavailable.
+      }
+
+      setEditLockHeld(false);
+      window.location.assign("/dashboard/drafts");
+    } catch {
+      setMessage("Could not contact Neon. No cancellation was confirmed.");
+    } finally {
+      cancellingRef.current = false;
+    }
+  }
+
   async function handleFinishEditing() {
     if (finishingRef.current) return;
 
@@ -175,6 +255,7 @@ export default function NewPostPage() {
   }
 
   async function handleSaveDraft() {
+    if (cancellingRef.current) return;
     if (featuredPhotoUploading) {
       setMessage("Please wait for the featured photograph to finish uploading.");
       return;
@@ -267,7 +348,7 @@ export default function NewPostPage() {
     if (!cloudDraftId || !editLockHeld) return;
 
     const timer = window.setInterval(async () => {
-      if (lockRenewalRef.current || finishingRef.current) return;
+      if (lockRenewalRef.current || finishingRef.current || cancellingRef.current) return;
       lockRenewalRef.current = true;
 
       try {
@@ -328,6 +409,16 @@ export default function NewPostPage() {
             return response.json();
           })
           .then(({ draft }) => {
+            originalStoryRef.current = {
+              title: draft.title ?? "",
+              story: draft.story ?? "",
+              date: draft.date ? String(draft.date).slice(0, 10) : "",
+              destination: draft.destination ?? "",
+              excerpt: draft.excerpt ?? "",
+              featuredImage: draft.featuredImage ?? "",
+              featuredImageAlt: draft.featuredImageAlt ?? "",
+              revision: draft.revision,
+            };
             setCloudDraftId(draft.id);
             setRevision(draft.revision);
             setTitle(draft.title ?? "");
@@ -435,7 +526,7 @@ export default function NewPostPage() {
   }, [title, story, date, destination, excerpt, featuredImage, featuredImageAlt, loaded, cloudDraftId]);
 
   useEffect(() => {
-    if (!loaded || !changesMade || recoveryAvailable) return;
+    if (!loaded || !changesMade || recoveryAvailable || cancellingRef.current) return;
 
     const timer = setTimeout(() => {
       void handleSaveDraft();
@@ -654,6 +745,7 @@ export default function NewPostPage() {
           value={story}
           disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
           onChange={(newStory) => {
+            if (cancellingRef.current) return;
             setStory(newStory);
             editVersionRef.current += 1;
             setChangesMade(true);
@@ -687,6 +779,16 @@ export default function NewPostPage() {
           className="ml-3 mt-6 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           Save & Close Editor
+        </button>
+      )}
+
+      {loaded && (
+        <button
+          type="button"
+          onClick={handleCancelEditing}
+          className="ml-3 mt-6 rounded-lg border border-red-700 px-6 py-3 font-semibold text-red-800"
+        >
+          Cancel Without Saving
         </button>
       )}
 

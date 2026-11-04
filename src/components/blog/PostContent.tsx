@@ -42,14 +42,25 @@ export function PostContent({ html }: PostContentProps) {
           return figure;
         }
 
-        const images = photos.map((photo: { src: string; alt?: string }) =>
-          `<img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.alt || "")}" style="width:100%;height:180px;object-fit:cover;display:block;border-radius:4px;" />`
-        ).join("");
+        const images = photos.map((photo: {
+          src: string;
+          alt?: string;
+          photoWidth?: number | null;
+        }) => {
+          const width = Number(photo.photoWidth);
+          const safeWidth = Number.isFinite(width) && width >= 80 && width <= 1200
+            ? `${width}px`
+            : photos.length === 2
+              ? "calc(50% - 4px)"
+              : "calc(33.333% - 6px)";
+
+          return `<div class="gallery-photo" style="width:${safeWidth};max-width:100%;flex-shrink:0;"><img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.alt || "")}" style="width:100%;height:auto;object-fit:contain;display:block;border-radius:4px;" /></div>`;
+        }).join("");
 
         const caption = captionMatch ? decode(captionMatch[1]) : "";
 
         return `<figure style="margin:16px 0;max-width:100%;">
-          <div style="display:grid;grid-template-columns:repeat(${photos.length},minmax(0,1fr));gap:8px;">${images}</div>
+          <div class="photo-gallery-row" style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;">${images}</div>
           ${caption ? `<figcaption style="text-align:center;font-size:0.875rem;font-style:italic;margin-top:6px;">${escapeHtml(caption)}</figcaption>` : ""}
         </figure>`;
       } catch {
@@ -77,10 +88,13 @@ export function PostContent({ html }: PostContentProps) {
               "margin-top": [/^[0-9.]+(px|rem|em|%)$/],
               "max-width": [/^[0-9.]+(px|rem|em|%)$/],
               "display": [/^(grid|block|inline-block|flex)$/],
+              "flex-wrap": [/^wrap$/],
+              "flex-shrink": [/^0$/],
+              "align-items": [/^flex-start$/],
               "grid-template-columns": [/^repeat\([23],minmax\(0,1fr\)\)$/],
               "gap": [/^[0-9.]+px$/],
-              "width": [/^[0-9.]+%$/],
-              "height": [/^[0-9.]+px$/],
+              "width": [/^([0-9.]+(px|%)|calc\((50% - 4px|33\.333% - 6px)\))$/],
+              "height": [/^(auto|[0-9.]+px)$/],
               "object-fit": [/^(cover|contain)$/],
               "border-radius": [/^[0-9.]+px$/],
               "font-size": [/^[0-9.]+rem$/],
