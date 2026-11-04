@@ -1,9 +1,54 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 
-export function PhotoView({ node, selected }: NodeViewProps) {
-  const { src, alt, photoCaption, photoSize, photoPosition } = node.attrs;
+export function PhotoView({ node, selected, updateAttributes, editor }: NodeViewProps) {
+  const { src, alt, photoCaption, photoSize, photoPosition, photoWidth } = node.attrs;
+  const figureRef = useRef<HTMLElement | null>(null);
+  const [dragWidth, setDragWidth] = useState<number | null>(null);
+
+  const startResize = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!editor.isEditable) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const figure = figureRef.current;
+    if (!figure) return;
+
+    const startWidth = figure.getBoundingClientRect().width;
+    const startX = event.clientX;
+    const pointerId = event.pointerId;
+    const handle = event.currentTarget;
+
+    handle.setPointerCapture(pointerId);
+
+    const move = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) return;
+      const width = Math.max(80, Math.min(1200, Math.round(
+        startWidth + moveEvent.clientX - startX
+      )));
+      setDragWidth(width);
+    };
+
+    const finish = (endEvent: PointerEvent) => {
+      if (endEvent.pointerId !== pointerId) return;
+      const width = Math.max(80, Math.min(1200, Math.round(
+        startWidth + endEvent.clientX - startX
+      )));
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", finish);
+      handle.removeEventListener("pointercancel", finish);
+      setDragWidth(null);
+      if (endEvent.type === "pointerup") {
+        updateAttributes({ photoWidth: width });
+      }
+    };
+
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", finish);
+    handle.addEventListener("pointercancel", finish);
+  };
 
   const widths: Record<string, string> = {
     small: "25%",
@@ -22,8 +67,10 @@ export function PhotoView({ node, selected }: NodeViewProps) {
   return (
     <NodeViewWrapper
       as="figure"
+      ref={figureRef}
       style={{
-        width: widths[photoSize] || "100%",
+        position: "relative",
+        width: dragWidth ?? (photoWidth || widths[photoSize] || "100%"),
         maxWidth: "100%",
         ...positionStyle,
       }}
@@ -35,6 +82,28 @@ export function PhotoView({ node, selected }: NodeViewProps) {
         style={{ width: "100%", height: "auto", display: "block" }}
         draggable={false}
       />
+      {editor.isEditable && selected && (
+        <button
+          type="button"
+          contentEditable={false}
+          onPointerDown={startResize}
+          aria-label="Drag to resize photograph"
+          title="Drag to resize photograph"
+          style={{
+            position: "absolute",
+            right: 0,
+            bottom: 0,
+            width: 22,
+            height: 22,
+            cursor: "nwse-resize",
+            background: "#2563eb",
+            border: "2px solid white",
+            borderRadius: 4,
+            touchAction: "none",
+            zIndex: 5,
+          }}
+        />
+      )}
       {photoCaption && (
         <figcaption
           style={{

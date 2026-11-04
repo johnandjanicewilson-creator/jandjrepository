@@ -241,6 +241,7 @@ export default function StoryEditor({
           alt: photo.alt || "",
           photoCaption: photo.photoCaption || "",
           photoSize: photo.photoSize || "full",
+          photoWidth: photo.photoWidth ?? null,
           photoPosition: photo.photoPosition || "center",
         })
       );
@@ -284,6 +285,7 @@ export default function StoryEditor({
       alt: node.attrs.alt || "",
       photoCaption: node.attrs.photoCaption || "",
       photoSize: node.attrs.photoSize || "full",
+      photoWidth: node.attrs.photoWidth ?? null,
       photoPosition: node.attrs.photoPosition || "center",
     }));
 
@@ -517,6 +519,7 @@ export default function StoryEditor({
             onClick={() =>
               editor?.chain().focus().updateAttributes("image", {
                 photoSize: size,
+                photoWidth: null,
               }).run()
             }
             className="rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
