@@ -62,7 +62,8 @@ export async function POST(request: Request) {
         jsonb_build_object(
           'excerpt', ${excerpt}::text,
           'featuredImage', ${featuredImage}::text,
-          'featuredImageAlt', ${featuredImageAlt}::text
+          'featuredImageAlt', ${featuredImageAlt}::text,
+          '_createdInEditSession', ${lockSession}::text
         ),
         ${session.user.id},
         NOW() + INTERVAL '5 minutes',

@@ -37,7 +37,25 @@ export async function POST(
 
     const rows = await sql`
       UPDATE travel_drafts
-      SET locked_by = ${user},
+      SET original_metadata = CASE
+            WHEN lock_session IS DISTINCT FROM ${lockSession}
+            THEN jsonb_set(
+              COALESCE(original_metadata, '{}'::jsonb),
+              '{_editSnapshot}',
+              jsonb_build_object(
+                'session', ${lockSession}::text,
+                'title', title,
+                'story', content,
+                'date', CASE WHEN travel_date IS NULL THEN '' ELSE travel_date::text END,
+                'destination', destination,
+                'excerpt', COALESCE(original_metadata->>'excerpt', ''),
+                'featuredImage', COALESCE(original_metadata->>'featuredImage', ''),
+                'featuredImageAlt', COALESCE(original_metadata->>'featuredImageAlt', '')
+              )
+            )
+            ELSE original_metadata
+          END,
+          locked_by = ${user},
           lock_session = ${lockSession},
           lock_expires_at = NOW() + INTERVAL '5 minutes'
       WHERE id = ${id}
@@ -93,7 +111,12 @@ export async function DELETE(
 
     const rows = await sql`
       UPDATE travel_drafts
-      SET locked_by = NULL,
+      SET original_metadata = CASE
+            WHEN original_metadata->'_editSnapshot'->>'session' = ${lockSession}
+            THEN original_metadata - '_editSnapshot' - '_createdInEditSession'
+            ELSE original_metadata - '_createdInEditSession'
+          END,
+          locked_by = NULL,
           lock_session = NULL,
           lock_expires_at = NULL
       WHERE id = ${id}
