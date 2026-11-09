@@ -50,7 +50,7 @@ export default function StoryPreviewPage() {
         <img
           src={preview.featuredImage}
           alt={preview.featuredImageAlt || preview.title}
-          className="mb-8 max-h-[450px] w-full rounded-lg object-cover"
+          className="mb-8 max-h-[450px] max-w-full rounded-lg object-contain"
         />
       )}
 
