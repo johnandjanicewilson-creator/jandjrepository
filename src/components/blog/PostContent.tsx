@@ -60,7 +60,7 @@ export function PostContent({ html }: PostContentProps) {
         const caption = captionMatch ? decode(captionMatch[1]) : "";
 
         return `<figure style="margin:16px 0;max-width:100%;">
-          <div class="photo-gallery-row" style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;">${images}</div>
+          <div class="photo-gallery-row" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;">${images}</div>
           ${caption ? `<figcaption style="text-align:center;font-size:0.875rem;font-style:italic;margin-top:6px;">${escapeHtml(caption)}</figcaption>` : ""}
         </figure>`;
       } catch {
@@ -90,7 +90,7 @@ export function PostContent({ html }: PostContentProps) {
               "display": [/^(grid|block|inline-block|flex)$/],
               "flex-wrap": [/^wrap$/],
               "flex-shrink": [/^0$/],
-              "align-items": [/^flex-start$/],
+              "align-items": [/^(flex-start|flex-end)$/],
               "grid-template-columns": [/^repeat\([23],minmax\(0,1fr\)\)$/],
               "gap": [/^[0-9.]+px$/],
               "width": [/^([0-9.]+(px|%)|calc\((50% - 4px|33\.333% - 6px)\))$/],

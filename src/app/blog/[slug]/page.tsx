@@ -94,16 +94,16 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <article className="blog-post w-full">
-      {publishedImage && <div className="relative h-[45vh] min-h-[320px] w-full">
+      {publishedImage && <div className="relative mx-auto mt-8 h-[320px] w-full max-w-4xl px-6 sm:h-[420px]">
         <Image
           src={publishedImage}
           alt={publishedImageAlt}
           fill
           priority
-          className="object-cover"
+          className="object-contain"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+
       </div>}
 
       <section className="post-content-area">

@@ -92,7 +92,7 @@ export function PhotoGalleryView({
         style={{
           display: "flex",
           flexWrap: "wrap",
-          alignItems: "flex-start",
+          alignItems: "flex-end",
           gap: "8px",
         }}
       >
