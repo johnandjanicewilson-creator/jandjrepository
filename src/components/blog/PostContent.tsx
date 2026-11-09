@@ -38,7 +38,7 @@ export function PostContent({ html }: PostContentProps) {
             .replace(/"/g, "&quot;");
 
         const photos = JSON.parse(decode(photosMatch[1]));
-        if (!Array.isArray(photos) || photos.length < 2 || photos.length > 3) {
+        if (!Array.isArray(photos) || photos.length < 1) {
           return figure;
         }
 
@@ -50,9 +50,11 @@ export function PostContent({ html }: PostContentProps) {
           const width = Number(photo.photoWidth);
           const safeWidth = Number.isFinite(width) && width >= 80 && width <= 1200
             ? `${width}px`
-            : photos.length === 2
-              ? "calc(50% - 4px)"
-              : "calc(33.333% - 6px)";
+            : photos.length === 1
+              ? "100%"
+              : photos.length === 2
+                ? "calc(50% - 4px)"
+                : "calc(33.333% - 6px)";
 
           return `<div class="gallery-photo" style="width:${safeWidth};max-width:100%;flex-shrink:0;"><img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.alt || "")}" style="width:100%;height:auto;object-fit:contain;display:block;border-radius:4px;" /></div>`;
         }).join("");

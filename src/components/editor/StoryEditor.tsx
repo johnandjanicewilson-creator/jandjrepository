@@ -87,7 +87,7 @@ export default function StoryEditor({
     if (!editor) return;
     editor.setEditable(!disabled);
   }, [editor, disabled]);
-  const insertGallery = (count: 2 | 3) => {
+  const insertGallery = () => {
     if (!editor) return;
 
     const picker = document.createElement("input");
@@ -98,10 +98,7 @@ export default function StoryEditor({
     picker.onchange = async () => {
       const files = Array.from(picker.files || []);
 
-      if (files.length !== count) {
-        window.alert(`Please select exactly ${count} photographs.`);
-        return;
-      }
+      if (files.length === 0) return;
 
       const position = editor.state.selection.from;
 
@@ -485,30 +482,12 @@ export default function StoryEditor({
         </button>
         <button
           type="button"
-          title="Insert a 2-photo gallery"
-          aria-label="Insert a 2-photo gallery"
+          title="Select one or more photographs from Finder"
           disabled={!editor}
-          onClick={() => insertGallery(2)}
-          className="rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
+          onClick={() => insertGallery()}
+          className="rounded border px-3 py-2 hover:bg-gray-100 disabled:opacity-40"
         >
-          <span className="flex gap-0.5" aria-hidden="true">
-            <span className="h-4 w-2 border border-current" />
-            <span className="h-4 w-2 border border-current" />
-          </span>
-        </button>
-        <button
-          type="button"
-          title="Insert a 3-photo gallery"
-          aria-label="Insert a 3-photo gallery"
-          disabled={!editor}
-          onClick={() => insertGallery(3)}
-          className="rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
-        >
-          <span className="flex gap-0.5" aria-hidden="true">
-            <span className="h-4 w-1.5 border border-current" />
-            <span className="h-4 w-1.5 border border-current" />
-            <span className="h-4 w-1.5 border border-current" />
-          </span>
+          Insert Gallery
         </button>
         {(["small", "medium", "large", "full"] as const).map((size) => (
           <button

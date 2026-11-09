@@ -102,7 +102,11 @@ export function PhotoGalleryView({
             style={{
               position: "relative",
               width: dragWidths[index] ?? photo.photoWidth ?? (
-                photos.length === 2 ? "calc(50% - 4px)" : "calc(33.333% - 6px)"
+                photos.length === 1
+                  ? "100%"
+                  : photos.length === 2
+                    ? "calc(50% - 4px)"
+                    : "calc(33.333% - 6px)"
               ),
               maxWidth: "100%",
               flexShrink: 0,
