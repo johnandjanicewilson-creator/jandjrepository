@@ -41,27 +41,44 @@ export default function StoryPreviewPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
-      <p className="mb-6 font-semibold text-amber-800">
-        LIVE PREVIEW — NOT PUBLISHED
-      </p>
-
-      {preview.featuredImage && (
-        <img
-          src={preview.featuredImage}
-          alt={preview.featuredImageAlt || preview.title}
-          className="mb-8 max-h-[450px] max-w-full rounded-lg object-contain"
-        />
-      )}
-
-      <header className="mb-10">
-        <p className="text-sm text-gray-600">
-          {preview.destination} · {preview.date}
+    <main>
+      <div className="mx-auto max-w-[1100px] px-8 pt-6">
+        <p className="font-semibold text-amber-800">
+          LIVE PREVIEW — NOT PUBLISHED
         </p>
-        <h1 className="mt-4 text-4xl font-bold">{preview.title}</h1>
-      </header>
+      </div>
 
-      <PostContent html={preview.story} />
+      <article className="blog-post w-full">
+        {preview.featuredImage && (
+          <div className="mx-auto mt-8 flex h-[320px] w-full max-w-[1100px] items-center justify-center px-8 sm:h-[420px]">
+            <img
+              src={preview.featuredImage}
+              alt={preview.featuredImageAlt || preview.title}
+              className="block h-full max-w-full object-contain"
+            />
+          </div>
+        )}
+
+        <section className="post-content-area">
+          <header>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              <span className="font-semibold text-accent">
+                {preview.destination}
+              </span>
+              <span aria-hidden>·</span>
+              <time dateTime={preview.date}>{preview.date}</time>
+            </div>
+
+            <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-sage sm:text-5xl lg:text-6xl">
+              {preview.title}
+            </h1>
+          </header>
+
+          <div className="mt-10">
+            <PostContent html={preview.story} />
+          </div>
+        </section>
+      </article>
     </main>
   );
 }
