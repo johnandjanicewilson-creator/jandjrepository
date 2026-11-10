@@ -78,6 +78,7 @@ export function PhotoView({ node, selected, updateAttributes, editor }: NodeView
       className={selected ? "outline outline-2 outline-blue-500" : ""}
     >
       <img
+        data-drag-handle
         src={src}
         alt={alt || ""}
         style={{ width: "100%", height: "auto", display: "block" }}
