@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { NodeSelection } from "@tiptap/pm/state";
 import {
   Bold,
   Italic,
@@ -67,7 +68,11 @@ export default function StoryEditor({
 
   const photoSelected = useEditorState({
     editor,
-    selector: ({ editor }) => editor?.isActive("image") ?? false,
+    selector: ({ editor }) =>
+      (editor?.state.selection instanceof NodeSelection &&
+        editor.state.selection.node.type.name === "image") ||
+      editor?.isActive("image") ||
+      false,
   });
 
   const gallerySelected = useEditorState({
