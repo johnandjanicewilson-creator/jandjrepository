@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
 
 type GalleryPhoto = {
   src: string;
@@ -21,6 +22,54 @@ export function PhotoGalleryView({
   const [activePhoto, setActivePhoto] = useState<number | null>(null);
   const [dragWidths, setDragWidths] = useState<Record<number, number>>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const addPhotos = () => {
+    if (!editor.isEditable || uploading) return;
+
+    const picker = document.createElement("input");
+    picker.type = "file";
+    picker.accept = "image/jpeg,image/png";
+    picker.multiple = true;
+
+    picker.onchange = async () => {
+      const files = Array.from(picker.files || []);
+      if (!files.length) return;
+
+      setUploading(true);
+      try {
+        const additions = [];
+        for (const file of files) {
+          const src = await uploadPhoto(file);
+          additions.push({ src, alt: file.name });
+        }
+
+        const currentPhotos = (node.attrs.photos || []) as GalleryPhoto[];
+        updateAttributes({
+          photos: [...currentPhotos, ...additions],
+        });
+      } catch (error) {
+        window.alert(
+          error instanceof Error ? error.message : "Photo upload failed"
+        );
+      } finally {
+        setUploading(false);
+      }
+    };
+
+    picker.click();
+  };
+
+  const removeSelectedPhoto = () => {
+    if (!editor.isEditable || activePhoto === null) return;
+    if (activePhoto < 0 || activePhoto >= photos.length) return;
+
+    updateAttributes({
+      photos: photos.filter((_, index) => index !== activePhoto),
+    });
+    setActivePhoto(null);
+    setDragWidths({});
+  };
 
   const startResize = (
     event: React.PointerEvent<HTMLButtonElement>,
@@ -112,6 +161,11 @@ export function PhotoGalleryView({
               flexShrink: 0,
             }}
             onClick={() => setActivePhoto(index)}
+            className={
+              editor.isEditable && activePhoto === index
+                ? "outline outline-2 outline-blue-500"
+                : ""
+            }
           >
             <img
               src={photo.src}
@@ -150,6 +204,37 @@ export function PhotoGalleryView({
           </div>
         ))}
       </div>
+      {editor.isEditable && (
+        <div
+          contentEditable={false}
+          className="mt-3 flex flex-wrap gap-2"
+        >
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              addPhotos();
+            }}
+            disabled={uploading}
+            className="rounded border px-3 py-2 disabled:opacity-40"
+          >
+            {uploading ? "Uploading..." : "Add Photo"}
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              removeSelectedPhoto();
+            }}
+            disabled={activePhoto === null || uploading}
+            className="rounded border px-3 py-2 disabled:opacity-40"
+          >
+            Remove Selected Photo
+          </button>
+        </div>
+      )}
       {caption && (
         <figcaption
           style={{
