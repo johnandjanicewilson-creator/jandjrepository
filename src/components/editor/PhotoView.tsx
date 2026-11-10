@@ -67,6 +67,7 @@ export function PhotoView({ node, selected, updateAttributes, editor }: NodeView
   return (
     <NodeViewWrapper
       as="figure"
+      contentEditable={false}
       ref={figureRef}
       style={{
         position: "relative",
