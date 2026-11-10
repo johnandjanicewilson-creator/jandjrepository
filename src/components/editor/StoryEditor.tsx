@@ -544,6 +544,11 @@ export default function StoryEditor({
             )}
           </button>
         ))}
+      <details className="w-full rounded-lg border bg-gray-50 p-2">
+        <summary className="cursor-pointer font-medium">
+          Advanced Photo Tools
+        </summary>
+        <div className="mt-2 flex flex-wrap gap-1">
       <button
         type="button"
         title="Add selected photograph to gallery"
@@ -619,6 +624,8 @@ export default function StoryEditor({
       >
         Cancel Move
       </button>
+        </div>
+      </details>
       <button
         type="button"
         title="Add or edit the selected photograph's caption"
