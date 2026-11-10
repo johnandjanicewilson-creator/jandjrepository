@@ -196,6 +196,7 @@ export default function NewPostPage() {
         // Browser storage may be unavailable.
       }
 
+      sessionStorage.removeItem(`jj-edit-session-${cloudDraftId}`);
       setEditLockHeld(false);
       window.location.assign("/dashboard/drafts");
     } catch {
@@ -245,6 +246,7 @@ export default function NewPostPage() {
         return;
       }
 
+      sessionStorage.removeItem(`jj-edit-session-${cloudDraftId}`);
       setEditLockHeld(false);
       window.location.assign("/dashboard/drafts");
     } catch {
@@ -376,13 +378,25 @@ export default function NewPostPage() {
   }, [cloudDraftId, editLockHeld]);
 
   useEffect(() => {
-    if (!lockSessionRef.current) {
-      lockSessionRef.current = crypto.randomUUID();
-    }
-
     try {
       const params = new URLSearchParams(window.location.search);
       const cloudId = params.get("cloud");
+
+      if (cloudId) {
+        const key = `jj-edit-session-${cloudId}`;
+        const stored = sessionStorage.getItem(key);
+        const uuidPattern =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+        lockSessionRef.current =
+          stored && uuidPattern.test(stored)
+            ? stored
+            : crypto.randomUUID();
+
+        sessionStorage.setItem(key, lockSessionRef.current);
+      } else if (!lockSessionRef.current) {
+        lockSessionRef.current = crypto.randomUUID();
+      }
 
       if (cloudId) {
         fetch(`/api/dashboard/drafts/${encodeURIComponent(cloudId)}/lock`, {
