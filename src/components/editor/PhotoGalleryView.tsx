@@ -133,6 +133,7 @@ export function PhotoGalleryView({
   return (
     <NodeViewWrapper
       as="figure"
+      contentEditable={false}
       className={selected ? "outline outline-2 outline-blue-500" : ""}
       style={{ margin: "16px 0", maxWidth: "100%" }}
     >
@@ -141,6 +142,7 @@ export function PhotoGalleryView({
         style={{
           display: "flex",
           flexWrap: "wrap",
+          justifyContent: "center",
           alignItems: "flex-end",
           gap: "8px",
         }}
