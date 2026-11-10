@@ -16,6 +16,7 @@ export function PhotoGalleryView({
   selected,
   updateAttributes,
   editor,
+  getPos,
 }: NodeViewProps) {
   const photos = (node.attrs.photos || []) as GalleryPhoto[];
   const caption = (node.attrs.caption || "") as string;
@@ -67,6 +68,48 @@ export function PhotoGalleryView({
     updateAttributes({
       photos: photos.filter((_, index) => index !== activePhoto),
     });
+    setActivePhoto(null);
+    setDragWidths({});
+  };
+
+  const moveSelectedPhoto = () => {
+    if (!editor.isEditable || activePhoto === null || uploading) return;
+    if (activePhoto < 0 || activePhoto >= photos.length) return;
+
+    const { state, view } = editor;
+    const galleryPosition = getPos();
+    if (typeof galleryPosition !== "number") return;
+
+    const gallery = state.doc.nodeAt(galleryPosition);
+    const imageType = state.schema.nodes.image;
+    if (!gallery || gallery.type.name !== "photoGallery" || !imageType) return;
+
+    const currentPhotos = gallery.attrs.photos as GalleryPhoto[];
+    const photo = currentPhotos[activePhoto];
+    if (!photo?.src) return;
+
+    const remaining = currentPhotos.filter(
+      (_, index) => index !== activePhoto
+    );
+
+    const image = imageType.create({
+      src: photo.src,
+      alt: photo.alt || "",
+      photoSize: "small",
+      photoWidth: null,
+      photoPosition: "left",
+    });
+
+    const tr = state.tr;
+
+    tr.setNodeMarkup(galleryPosition, undefined, {
+      ...gallery.attrs,
+      photos: remaining,
+    });
+
+    tr.insert(galleryPosition + gallery.nodeSize, image);
+
+    view.dispatch(tr);
     setActivePhoto(null);
     setDragWidths({});
   };
@@ -233,7 +276,19 @@ export function PhotoGalleryView({
             disabled={activePhoto === null || uploading}
             className="rounded border px-3 py-2 disabled:opacity-40"
           >
-            Remove Selected Photo
+            Remove from Gallery
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              moveSelectedPhoto();
+            }}
+            disabled={activePhoto === null || uploading}
+            className="rounded border px-3 py-2 disabled:opacity-40"
+          >
+            Move to Story
           </button>
         </div>
       )}
