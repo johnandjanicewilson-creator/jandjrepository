@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
-import { getJourneys } from "@/lib/journeys";
+import { getPublicJourneys } from "@/lib/journeys";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Journeys",
@@ -9,8 +11,8 @@ export const metadata = {
     "Our trips, newest first. Pick one and read it from start to finish.",
 };
 
-export default function JourneysPage() {
-  const journeys = getJourneys();
+export default async function JourneysPage() {
+  const journeys = await getPublicJourneys();
 
   return (
     <Container className="py-12 lg:py-16">
@@ -32,13 +34,17 @@ export default function JourneysPage() {
             className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
             <div className="relative aspect-[4/3]">
-              <Image
-                src={journey.coverImage}
-                alt={journey.name}
-                fill
-                className="object-cover transition duration-500 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 33vw"
-              />
+              {journey.coverImage ? (
+                <Image
+                  src={journey.coverImage}
+                  alt={journey.name}
+                  fill
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-sage" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 text-white">
                 {journey.years && (

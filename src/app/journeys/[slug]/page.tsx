@@ -3,22 +3,25 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
-import { getAllJourneySlugs, getJourneyPosts } from "@/lib/journeys";
+import { getPublicJourneys, getPublicJourneyPosts } from "@/lib/journeys";
 import { getPostDisplayDate, formatDate } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 interface JourneyPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  return getAllJourneySlugs().map((slug) => ({ slug }));
+  const journeys = await getPublicJourneys();
+  return journeys.map((journey) => ({ slug: journey.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: JourneyPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const journey = getJourneyPosts(slug);
+  const journey = await getPublicJourneyPosts(slug);
   if (!journey) return { title: "Journey not found" };
   return {
     title: journey.name,
@@ -28,7 +31,7 @@ export async function generateMetadata({
 
 export default async function JourneyPage({ params }: JourneyPageProps) {
   const { slug } = await params;
-  const journey = getJourneyPosts(slug);
+  const journey = await getPublicJourneyPosts(slug);
   if (!journey) notFound();
 
   const { name, posts } = journey;
@@ -59,13 +62,17 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
               className="group flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row"
             >
               <div className="relative aspect-[16/9] w-full shrink-0 sm:aspect-[4/3] sm:w-56">
-                <Image
-                  src={post.featuredImage}
-                  alt={post.featuredImageAlt ?? post.title}
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                  sizes="(max-width: 640px) 100vw, 224px"
-                />
+                {post.featuredImage ? (
+                  <Image
+                    src={post.featuredImage}
+                    alt={post.featuredImageAlt ?? post.title}
+                    fill
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, 224px"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-sage" />
+                )}
                 <div className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-sage text-xs font-semibold text-white">
                   {i + 1}
                 </div>

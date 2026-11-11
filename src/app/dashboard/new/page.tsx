@@ -22,6 +22,10 @@ export default function NewPostPage() {
   const [story, setStory] = useState("");
   const [date, setDate] = useState("");
   const [destination, setDestination] = useState("");
+  const [series, setSeries] = useState("");
+  const [creatingJourney, setCreatingJourney] = useState(false);
+  const [recentJourneys, setRecentJourneys] = useState<string[]>([]);
+  const [journeysLoadError, setJourneysLoadError] = useState(false);
   const [featuredImage, setFeaturedImage] = useState("");
   const [featuredImageAlt, setFeaturedImageAlt] = useState("");
   const [featuredPhotoUploading, setFeaturedPhotoUploading] = useState(false);
@@ -38,6 +42,7 @@ export default function NewPostPage() {
     story: string;
     date: string;
     destination: string;
+    series: string;
     excerpt: string;
     featuredImage: string;
     featuredImageAlt: string;
@@ -55,12 +60,40 @@ export default function NewPostPage() {
     story: string;
     date: string;
     destination: string;
+    series?: string;
     excerpt?: string;
     featuredImage?: string;
     featuredImageAlt?: string;
     backedUpAt: string;
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/dashboard/journeys", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Journey lookup failed");
+        return response.json();
+      })
+      .then((data) => {
+        if (active && Array.isArray(data.journeys)) {
+          setRecentJourneys(
+            data.journeys.filter(
+              (name: unknown): name is string =>
+                typeof name === "string" && name.trim().length > 0
+            ).slice(0, 5)
+          );
+        }
+      })
+      .catch(() => {
+        if (active) setJourneysLoadError(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const previewDataRef = useRef({
     title, story, date, destination, featuredImage, featuredImageAlt,
@@ -273,6 +306,11 @@ export default function NewPostPage() {
       return;
     }
 
+    if (creatingJourney && !series.trim()) {
+      setMessage("Please enter a Journey name before saving, or select No Journey.");
+      return;
+    }
+
     if (recoveryAvailable) {
       setMessage("Please choose which version to keep before saving.");
       return;
@@ -297,7 +335,7 @@ export default function NewPostPage() {
       const response = await fetch(url, {
         method: cloudDraftId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, story, date, destination, excerpt, featuredImage, featuredImageAlt, revision, lockSession: lockSessionRef.current, backedUpAt: new Date().toISOString() }),
+        body: JSON.stringify({ title, story, date, destination, series, excerpt, featuredImage, featuredImageAlt, revision, lockSession: lockSessionRef.current, backedUpAt: new Date().toISOString() }),
       });
 
       if (!response.ok) {
@@ -428,6 +466,7 @@ export default function NewPostPage() {
               story: draft.story ?? "",
               date: draft.date ? String(draft.date).slice(0, 10) : "",
               destination: draft.destination ?? "",
+              series: draft.series ?? "",
               excerpt: draft.excerpt ?? "",
               featuredImage: draft.featuredImage ?? "",
               featuredImageAlt: draft.featuredImageAlt ?? "",
@@ -438,6 +477,8 @@ export default function NewPostPage() {
             setTitle(draft.title ?? "");
             setStory(draft.story ?? "");
             setDestination(draft.destination ?? "");
+            setSeries(draft.series ?? "");
+setCreatingJourney(false);
             setDate(draft.date ? String(draft.date).slice(0, 10) : "");
             setFeaturedImage(draft.featuredImage ?? "");
             setFeaturedImageAlt(draft.featuredImageAlt ?? "");
@@ -466,6 +507,8 @@ export default function NewPostPage() {
           setStory(existing.story);
           setDate(existing.date ?? "");
           setDestination(existing.destination ?? "");
+          setSeries(existing.series ?? "");
+setCreatingJourney(false);
           setLoaded(true);
           return;
         }
@@ -501,6 +544,8 @@ export default function NewPostPage() {
         backup.story !== story ||
         backup.date !== date ||
         backup.destination !== destination ||
+        (typeof backup.series === "string" &&
+         backup.series !== series) ||
         (typeof backup.excerpt === "string" &&
          backup.excerpt !== excerpt) ||
         (typeof backup.featuredImage === "string" &&
@@ -528,6 +573,7 @@ export default function NewPostPage() {
           story,
           date,
           destination,
+          series,
           excerpt,
           featuredImage,
           featuredImageAlt,
@@ -537,7 +583,7 @@ export default function NewPostPage() {
     } catch {
       // Browser storage may be unavailable.
     }
-  }, [title, story, date, destination, excerpt, featuredImage, featuredImageAlt, loaded, cloudDraftId]);
+  }, [title, story, date, destination, series, excerpt, featuredImage, featuredImageAlt, loaded, cloudDraftId]);
 
   useEffect(() => {
     if (!loaded || !changesMade || recoveryAvailable || cancellingRef.current) return;
@@ -547,7 +593,7 @@ export default function NewPostPage() {
     }, 30000);
 
     return () => clearTimeout(timer);
-  }, [loaded, changesMade, title, story, date, destination, excerpt, featuredImage, featuredImageAlt, featuredPhotoUploading, retryCount, recoveryAvailable]);
+  }, [loaded, changesMade, title, story, date, destination, series, excerpt, featuredImage, featuredImageAlt, featuredPhotoUploading, retryCount, recoveryAvailable]);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
@@ -583,6 +629,8 @@ export default function NewPostPage() {
               setStory(recoveryDraft.story);
               setDate(recoveryDraft.date);
               setDestination(recoveryDraft.destination);
+              setSeries(recoveryDraft.series ?? "");
+setCreatingJourney(false);
               setExcerpt(recoveryDraft.excerpt ?? "");
               setFeaturedImage(recoveryDraft.featuredImage ?? "");
               setFeaturedImageAlt(recoveryDraft.featuredImageAlt ?? "");
@@ -677,6 +725,81 @@ export default function NewPostPage() {
             setChangesMade(true);
           }}
         />
+      </div>
+
+      <div className="mt-6">
+        <label htmlFor="journey" className="block font-semibold">
+          Journey
+        </label>
+        <select
+          id="journey"
+          disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
+          className="mt-2 w-full rounded-lg border p-3"
+          value={creatingJourney ? "__new_journey__" : series}
+          onChange={(e) => {
+            if (e.target.value === "__new_journey__") {
+              setCreatingJourney(true);
+              setSeries("");
+              editVersionRef.current += 1;
+              setChangesMade(true);
+              return;
+            }
+            setCreatingJourney(false);
+            setSeries(e.target.value);
+            editVersionRef.current += 1;
+            setChangesMade(true);
+          }}
+        >
+          <option value="">No Journey — Standalone Story</option>
+          <option value="__new_journey__">+ New Journey...</option>
+          {series && !recentJourneys.includes(series) && (
+            <option value={series}>{series}</option>
+          )}
+          {recentJourneys.map((name) => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+        </select>
+        {creatingJourney && (
+          <div className="mt-3">
+            <label htmlFor="new-journey" className="block text-sm font-semibold">
+              New Journey Name
+            </label>
+            <input
+              id="new-journey"
+              type="text"
+              disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
+              className="mt-2 w-full rounded-lg border p-3"
+              placeholder="Example: Washington, D.C. 2026"
+              value={series}
+              onChange={(e) => {
+                setSeries(e.target.value);
+                editVersionRef.current += 1;
+                setChangesMade(true);
+              }}
+            />
+          </div>
+        )}
+        <label className="mt-3 flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={!creatingJourney && series === ""}
+            disabled={recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setCreatingJourney(false);
+                setSeries("");
+                editVersionRef.current += 1;
+                setChangesMade(true);
+              }
+            }}
+          />
+          No Journey — this is a standalone story
+        </label>
+        {journeysLoadError && (
+          <p className="mt-2 text-sm text-red-700">
+            Recent Journeys could not be loaded. Existing assignments are preserved.
+          </p>
+        )}
       </div>
 
       <div className="mt-6">

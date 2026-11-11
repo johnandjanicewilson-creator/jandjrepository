@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { getDatabase } from "@/lib/db/neon";
 import { getJourneys } from "@/lib/journeys";
+import { getAllPublishedStories } from "@/lib/publishing/getPublishedStory";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -22,7 +23,21 @@ export async function GET() {
       GROUP BY original_metadata->>'series'
     `;
 
+    const published = await getAllPublishedStories();
+
     const candidates = [
+      ...published
+        .filter((row) => {
+          const metadata = row.original_metadata as { series?: string } | null;
+          return typeof metadata?.series === "string" && metadata.series.trim();
+        })
+        .map((row) => {
+          const metadata = row.original_metadata as { series: string };
+          return {
+            name: metadata.series.trim(),
+            recentDate: new Date(String(row.published_at)).getTime(),
+          };
+        }),
       ...drafts.map((row) => ({
         name: String(row.name).trim(),
         recentDate: new Date(String(row.recent_date)).getTime(),

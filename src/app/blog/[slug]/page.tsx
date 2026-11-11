@@ -68,6 +68,7 @@ export default async function PostPage({ params }: PostPageProps) {
     format: "md", readingTime: readingTime(String(published!.content).replace(/<[^>]*>/g, " ")).text,
     date: newDate, year: Number(newDate.slice(0, 4)),
     destination: typeof newMeta.destination === "string" ? newMeta.destination : "Travel",
+    series: typeof newMeta.series === "string" ? newMeta.series : "",
     excerpt: typeof newMeta.excerpt === "string" ? newMeta.excerpt : "",
     featuredImage: typeof newMeta.featuredImage === "string" ? newMeta.featuredImage : "",
     featuredImageAlt: typeof newMeta.featuredImageAlt === "string" ? newMeta.featuredImageAlt : "",

@@ -4,6 +4,7 @@ export type TravelDraft = {
   story: string;
   date?: string;
   destination?: string;
+  series?: string;
   updatedAt: string;
 };
 

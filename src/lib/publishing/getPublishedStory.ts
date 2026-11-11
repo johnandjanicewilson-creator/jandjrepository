@@ -27,3 +27,15 @@ export async function getNewPublishedStories() {
     ORDER BY p.published_at DESC
   `;
 }
+
+/** Approved publications, including updates to original stories. */
+export async function getAllPublishedStories() {
+  const sql = getDatabase();
+
+  return await sql`
+    SELECT slug, title, content, original_metadata, published_at
+    FROM travel_published
+    WHERE publication_approved = true
+    ORDER BY published_at DESC
+  `;
+}
