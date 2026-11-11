@@ -353,57 +353,89 @@ export default function StoryEditor({
 
   return (
     <div>
-      <div className="sticky top-20 z-30 mb-2 flex flex-wrap items-center gap-1 rounded-lg border bg-white p-2 shadow-sm">
-        <button title="Heading 2"
+
+      <style>{`
+        .story-toolbar .story-tool {
+          position: relative;
+        }
+        .story-toolbar .story-tool[data-tooltip]:hover::after,
+        .story-toolbar .story-tool[data-tooltip]:focus-visible::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          bottom: calc(100% + 10px);
+          left: 65%;
+          z-index: 100;
+          width: max-content;
+          max-width: 240px;
+          padding: 6px 9px;
+          border-radius: 5px;
+          background: #1f2937;
+          color: white;
+          font-size: 12px;
+          font-style: normal;
+          font-weight: 400;
+          line-height: 1.4;
+          text-align: left;
+          white-space: normal;
+          pointer-events: none;
+          box-shadow: 0 2px 6px #0003;
+        }
+        .story-toolbar .story-tool:disabled:hover::after {
+          display: none;
+        }
+      `}</style>
+      <div className="story-toolbar sticky top-20 z-30 mb-2 rounded-lg border bg-white p-2 shadow-sm">
+        <div className="flex flex-wrap items-center gap-1 ">
+<button data-tooltip="Heading 2"
           type="button"
           onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-          className="rounded border p-2 hover:bg-gray-100"
+          className="story-tool rounded border p-2 hover:bg-gray-100"
         >
           <Heading2 size={18} aria-label="Heading 2" />
         </button>       
-        <button title="Heading 3"
+        <button data-tooltip="Heading 3"
           type="button"
           onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
-          className="rounded border p-2 hover:bg-gray-100"
+          className="story-tool rounded border p-2 hover:bg-gray-100"
         >
           <Heading3 size={18} aria-label="Heading 3" />
         </button>
- <button title="Bold"
+ <button data-tooltip="Bold"
           type="button"
           onClick={() => editor?.chain().focus().toggleBold().run()}
-          className="rounded border px-3 py-2 font-bold"
+          className="story-tool rounded border px-3 py-2 font-bold"
         >
           <Bold size={18} aria-label="Bold" />
         </button>
-        <button title="Italic"
+        <button data-tooltip="Italic"
           type="button"
           onClick={() => editor?.chain().focus().toggleItalic().run()}
-          className="rounded border px-3 py-2 italic"
+          className="story-tool rounded border px-3 py-2 italic"
         >
           <Italic size={18} aria-label="Italic" />
         </button>
-        <button title="Bullet List"
+        <button data-tooltip="Bullet List"
           type="button"
           onClick={() => editor?.chain().focus().toggleBulletList().run()}
-          className="rounded border p-2 hover:bg-gray-100"
+          className="story-tool rounded border p-2 hover:bg-gray-100"
         >
           <List size={18} aria-label="Bullet List" />
         </button>
-<button title="Undo"
+<button data-tooltip="Inset Text"
           type="button"
-          onClick={() => editor?.chain().focus().undo().run()}
-          className="rounded border p-2 hover:bg-gray-100"
+          onClick={() => editor?.chain().focus().toggleInsetText().run()}
+          className="story-tool rounded border p-2 hover:bg-gray-100"
         >
-          <Undo2 size={18} aria-label="Undo" />
+          <IndentIncrease size={18} aria-label="Inset Text" />
         </button>
-        <button title="Redo"
-          type="button"
-          onClick={() => editor?.chain().focus().redo().run()}
-          className="rounded border p-2 hover:bg-gray-100"
-        >
-          <Redo2 size={18} aria-label="Redo" />
-        </button>
-        <button title="Insert Link"
+<button data-tooltip="Block Quote"
+  type="button"
+  onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+  className="story-tool rounded border p-2 hover:bg-gray-100"
+>
+  <Quote size={18} aria-label="Block Quote" />
+</button>
+        <button data-tooltip="Insert Link"
           type="button"
           onClick={() => {
             if (!editor) return;
@@ -412,32 +444,35 @@ export default function StoryEditor({
             if (url) {
               editor.chain().focus().setTextSelection({ from, to }).setLink({ href: url }).run();            
           }}}
-          className="rounded border p-2 hover:bg-gray-100"
+          className="story-tool rounded border p-2 hover:bg-gray-100"
         >
           <Link2 size={18} aria-label="Insert Link" />
         </button>
-        <button title="Inset Text"
-          type="button"
-          onClick={() => editor?.chain().focus().toggleInsetText().run()}
-          className="rounded border p-2 hover:bg-gray-100"
-        >
-          <IndentIncrease size={18} aria-label="Inset Text" />
-        </button>
-<button title="Block Quote"
-  type="button"
-  onClick={() => editor?.chain().focus().toggleBlockquote().run()}
-  className="rounded border p-2 hover:bg-gray-100"
->
-  <Quote size={18} aria-label="Block Quote" />
-</button>
-        <button title="Clear Formatting"
+        <button data-tooltip="Clear Formatting"
           type="button"
           onClick={() => editor?.chain().focus().unsetAllMarks().run()}
-          className="rounded border p-2 hover:bg-gray-100"
+          className="story-tool rounded border p-2 hover:bg-gray-100"
         >
           <RemoveFormatting size={18} aria-label="Clear Formatting" />
         </button>
-        <button title="Insert Photo"
+        <button data-tooltip="Undo"
+          type="button"
+          onClick={() => editor?.chain().focus().undo().run()}
+          className="story-tool rounded border p-2 hover:bg-gray-100"
+        >
+          <Undo2 size={18} aria-label="Undo" />
+        </button>
+        <button data-tooltip="Redo"
+          type="button"
+          onClick={() => editor?.chain().focus().redo().run()}
+          className="story-tool rounded border p-2 hover:bg-gray-100"
+        >
+          <Redo2 size={18} aria-label="Redo" />
+        </button>
+                </div>
+        <div className="my-2 border-t border-gray-200" />
+        <div className="flex flex-wrap items-center gap-1 ">
+<button data-tooltip="Insert Photo"
           type="button"
           disabled={!editor}
           onClick={async () => {
@@ -481,16 +516,16 @@ export default function StoryEditor({
 
             picker.click();
           }}
-          className="rounded border p-2 hover:bg-gray-100"
+          className="story-tool rounded border p-2 hover:bg-gray-100"
         >
           <ImagePlus size={18} aria-label="Insert Photo" />
         </button>
         <button
           type="button"
-          title="Select one or more photographs from Finder"
+          data-tooltip="Select one or more photographs from Finder"
           disabled={!editor}
           onClick={() => insertGallery()}
-          className="rounded border px-3 py-2 hover:bg-gray-100 disabled:opacity-40"
+          className="story-tool rounded border px-3 py-2 hover:bg-gray-100 disabled:opacity-40"
         >
           Insert Gallery
         </button>
@@ -498,7 +533,7 @@ export default function StoryEditor({
           <button
             key={size}
             type="button"
-            title={`Set selected photo to ${size}`}
+            data-tooltip={`Set selected photo to ${size}`}
             disabled={!editor || !photoSelected}
             onClick={() =>
               editor?.chain().focus().updateAttributes("image", {
@@ -506,7 +541,7 @@ export default function StoryEditor({
                 photoWidth: null,
               }).run()
             }
-            className="rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
+            className="story-tool rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
           >
             <span
               aria-label={`${size} photo size`}
@@ -526,14 +561,14 @@ export default function StoryEditor({
           <button
             key={position}
             type="button"
-            title={`Position selected photo ${position}`}
+            data-tooltip={`Position selected photo ${position}`}
             disabled={!editor || !photoSelected}
             onClick={() =>
               editor?.chain().focus().updateAttributes("image", {
                 photoPosition: position,
               }).run()
             }
-            className="rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
+            className="story-tool rounded border p-2 hover:bg-gray-100 disabled:opacity-40"
           >
             {position === "left" ? (
               <AlignLeft size={18} />
@@ -544,91 +579,9 @@ export default function StoryEditor({
             )}
           </button>
         ))}
-      <details className="w-full rounded-lg border bg-gray-50 p-2">
-        <summary className="cursor-pointer font-medium">
-          Advanced Photo Tools
-        </summary>
-        <div className="mt-2 flex flex-wrap gap-1">
       <button
         type="button"
-        title="Add selected photograph to gallery"
-        disabled={!editor || !photoSelected || galleryPhotoSelections.length >= 3}
-        onClick={() => {
-          if (!editor || !editor.isActive("image")) return;
-          const { from: position } = editor.state.selection;
-          const node = editor.state.doc.nodeAt(position);
-          if (node?.type.name !== "image") return;
-          const src = node.attrs.src;
-          if (typeof src !== "string" || !src) return;
-          setGalleryPhotoSelections((previous) =>
-            previous.some((photo) => photo.position === position)
-              ? previous
-              : [...previous, { position, src }]
-          );
-        }}
-        className="rounded border px-3 py-2 disabled:opacity-40"
-      >
-        Add to Gallery ({galleryPhotoSelections.length}/3)
-      </button>
-      <button
-        type="button"
-        title="Combine selected photographs into a gallery"
-        disabled={!editor || galleryPhotoSelections.length < 2}
-        onClick={makeGallery}
-        className="rounded border px-3 py-2 disabled:opacity-40"
-      >
-        Make Gallery
-      </button>
-      <button
-        type="button"
-        title="Clear selected gallery photographs"
-        disabled={galleryPhotoSelections.length === 0}
-        onClick={() => setGalleryPhotoSelections([])}
-        className="rounded border px-3 py-2 disabled:opacity-40"
-      >
-        Clear Selection
-      </button>
-      <button
-        type="button"
-        title="Separate the selected gallery into individual photographs"
-        disabled={!editor || !gallerySelected}
-        onClick={separateGallery}
-        className="rounded border px-3 py-2 disabled:opacity-40"
-      >
-        Separate Gallery
-      </button>
-      <button
-        type="button"
-        title="Select this gallery for moving"
-        disabled={!editor || !gallerySelected || !!galleryToMove}
-        onClick={startMovingGallery}
-        className="rounded border px-3 py-2 disabled:opacity-40"
-      >
-        Move Gallery
-      </button>
-      <button
-        type="button"
-        title="Place the gallery at the cursor"
-        disabled={!editor || !galleryToMove}
-        onClick={placeMovingGallery}
-        className="rounded border px-3 py-2 disabled:opacity-40"
-      >
-        Place Gallery
-      </button>
-      <button
-        type="button"
-        title="Cancel moving the gallery"
-        disabled={!galleryToMove}
-        onClick={() => setGalleryToMove(null)}
-        className="rounded border px-3 py-2 disabled:opacity-40"
-      >
-        Cancel Move
-      </button>
-        </div>
-      </details>
-      <button
-        type="button"
-        title="Add or edit the selected photograph's caption"
+        data-tooltip="Add or edit the selected photograph's caption"
         disabled={!editor || (!photoSelected && !gallerySelected)}
         onClick={() => {
           if (!editor) return;
@@ -645,10 +598,93 @@ export default function StoryEditor({
             [attribute]: caption,
           }).run();
         }}
-        className="rounded border px-3 py-2 disabled:opacity-40"
+        className="story-tool rounded border px-3 py-2 disabled:opacity-40"
       >
         <Captions size={18} aria-label="Add or Edit Caption" />
       </button>
+<details className="group relative ml-auto shrink-0 rounded-lg border bg-gray-50 px-3 py-2">
+        <summary className="cursor-pointer text-sm font-medium">
+          Advanced
+        </summary>
+        <div className="hidden absolute right-0 top-full z-50 mt-2 w-72 flex-wrap gap-1 rounded-lg border bg-white p-3 shadow-lg group-open:flex">
+      <button
+        type="button"
+        data-tooltip="Add selected photograph to gallery"
+        disabled={!editor || !photoSelected || galleryPhotoSelections.length >= 3}
+        onClick={() => {
+          if (!editor || !editor.isActive("image")) return;
+          const { from: position } = editor.state.selection;
+          const node = editor.state.doc.nodeAt(position);
+          if (node?.type.name !== "image") return;
+          const src = node.attrs.src;
+          if (typeof src !== "string" || !src) return;
+          setGalleryPhotoSelections((previous) =>
+            previous.some((photo) => photo.position === position)
+              ? previous
+              : [...previous, { position, src }]
+          );
+        }}
+        className="story-tool rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Add to Gallery ({galleryPhotoSelections.length}/3)
+      </button>
+      <button
+        type="button"
+        data-tooltip="Combine selected photographs into a gallery"
+        disabled={!editor || galleryPhotoSelections.length < 2}
+        onClick={makeGallery}
+        className="story-tool rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Make Gallery
+      </button>
+      <button
+        type="button"
+        data-tooltip="Clear selected gallery photographs"
+        disabled={galleryPhotoSelections.length === 0}
+        onClick={() => setGalleryPhotoSelections([])}
+        className="story-tool rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Clear Selection
+      </button>
+      <button
+        type="button"
+        data-tooltip="Separate the selected gallery into individual photographs"
+        disabled={!editor || !gallerySelected}
+        onClick={separateGallery}
+        className="story-tool rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Separate Gallery
+      </button>
+      <button
+        type="button"
+        data-tooltip="Select this gallery for moving"
+        disabled={!editor || !gallerySelected || !!galleryToMove}
+        onClick={startMovingGallery}
+        className="story-tool rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Move Gallery
+      </button>
+      <button
+        type="button"
+        data-tooltip="Place the gallery at the cursor"
+        disabled={!editor || !galleryToMove}
+        onClick={placeMovingGallery}
+        className="story-tool rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Place Gallery
+      </button>
+      <button
+        type="button"
+        data-tooltip="Cancel moving the gallery"
+        disabled={!galleryToMove}
+        onClick={() => setGalleryToMove(null)}
+        className="story-tool rounded border px-3 py-2 disabled:opacity-40"
+      >
+        Cancel Move
+      </button>
+        </div>
+      </details>
+              </div>
       </div>
       <EditorContent editor={editor} />
     </div>
