@@ -384,7 +384,7 @@ export default function StoryEditor({
           display: none;
         }
       `}</style>
-      <div className="story-toolbar sticky top-20 z-30 mb-2 rounded-lg border bg-white p-2 shadow-sm">
+      <div className="story-toolbar sticky top-28 z-30 mb-2 rounded-lg border bg-white p-2 shadow-sm">
         <div className="flex flex-wrap items-center gap-1 ">
 <button data-tooltip="Heading 2"
           type="button"
