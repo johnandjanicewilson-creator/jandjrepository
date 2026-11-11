@@ -65,7 +65,11 @@ export async function POST(
           original_metadata = jsonb_set(
             jsonb_set(
               jsonb_set(
-                original_metadata - '_editSnapshot',
+                jsonb_set(
+                  original_metadata - '_editSnapshot',
+                  '{series}',
+                  to_jsonb(COALESCE(original_metadata->'_editSnapshot'->>'series', '')::text)
+                ),
                 '{excerpt}',
                 to_jsonb(COALESCE(original_metadata->'_editSnapshot'->>'excerpt', '')::text)
               ),

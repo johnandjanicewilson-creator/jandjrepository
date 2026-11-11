@@ -48,6 +48,7 @@ export async function POST(
                 'story', content,
                 'date', CASE WHEN travel_date IS NULL THEN '' ELSE travel_date::text END,
                 'destination', destination,
+                'series', COALESCE(original_metadata->>'series', ''),
                 'excerpt', COALESCE(original_metadata->>'excerpt', ''),
                 'featuredImage', COALESCE(original_metadata->>'featuredImage', ''),
                 'featuredImageAlt', COALESCE(original_metadata->>'featuredImageAlt', '')

@@ -11,13 +11,15 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
-    const { title, story, date, destination, excerpt, featuredImage, featuredImageAlt, lockSession } = data;
+    const { title, story, date, destination, series = '', excerpt, featuredImage, featuredImageAlt, lockSession } = data;
 
     if (
       typeof title !== "string" ||
       typeof story !== "string" ||
       typeof date !== "string" ||
       typeof destination !== "string" ||
+      typeof series !== "string" ||
+      series.length > 300 ||
       typeof excerpt !== "string" ||
       excerpt.length > 1000 ||
       typeof featuredImage !== "string" ||
@@ -60,6 +62,7 @@ export async function POST(request: Request) {
         ${date || null},
         ${destination},
         jsonb_build_object(
+          'series', ${series.trim()}::text,
           'excerpt', ${excerpt}::text,
           'featuredImage', ${featuredImage}::text,
           'featuredImageAlt', ${featuredImageAlt}::text,

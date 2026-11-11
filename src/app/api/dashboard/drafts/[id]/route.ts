@@ -21,13 +21,15 @@ export async function PUT(
 
   try {
     const data = await request.json();
-    const { title, story, date, destination, excerpt, featuredImage, featuredImageAlt, revision, lockSession } = data;
+    const { title, story, date, destination, series = '', excerpt, featuredImage, featuredImageAlt, revision, lockSession } = data;
 
     if (
       typeof title !== "string" ||
       typeof story !== "string" ||
       typeof date !== "string" ||
       typeof destination !== "string" ||
+      typeof series !== "string" ||
+      series.length > 300 ||
       typeof excerpt !== "string" ||
       excerpt.length > 1000 ||
       typeof featuredImage !== "string" ||
@@ -59,7 +61,11 @@ export async function PUT(
           original_metadata = jsonb_set(
             jsonb_set(
               jsonb_set(
-                COALESCE(original_metadata, '{}'::jsonb),
+                jsonb_set(
+                  COALESCE(original_metadata, '{}'::jsonb),
+                  '{series}',
+                  to_jsonb(${series.trim()}::text)
+                ),
                 '{excerpt}',
                 to_jsonb(${excerpt}::text)
               ),
@@ -118,7 +124,8 @@ export async function GET(
              travel_date AS date, updated_at, revision,
              original_metadata->>'featuredImage' AS "featuredImage",
              original_metadata->>'featuredImageAlt' AS "featuredImageAlt",
-             original_metadata->>'excerpt' AS "excerpt"
+             original_metadata->>'excerpt' AS "excerpt",
+             original_metadata->>'series' AS "series"
       FROM travel_drafts
       WHERE id = ${id}
       LIMIT 1
