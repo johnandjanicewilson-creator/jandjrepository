@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
 
@@ -24,6 +24,27 @@ export function PhotoGalleryView({
   const [dragWidths, setDragWidths] = useState<Record<number, number>>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const clearSelectionOutsideGallery = () => {
+      const position = getPos();
+      const selection = editor.state.selection;
+
+      if (
+        typeof position !== "number" ||
+        selection.from !== position ||
+        selection.to !== position + node.nodeSize
+      ) {
+        setActivePhoto(null);
+      }
+    };
+
+    editor.on("selectionUpdate", clearSelectionOutsideGallery);
+
+    return () => {
+      editor.off("selectionUpdate", clearSelectionOutsideGallery);
+    };
+  }, [editor, getPos, node.nodeSize]);
 
   const addPhotos = () => {
     if (!editor.isEditable || uploading) return;
