@@ -529,7 +529,7 @@ export default function StoryEditor({
         >
           Insert Gallery
         </button>
-        {(["small", "medium", "large", "full"] as const).map((size) => (
+        {photoSelected && (["small", "medium", "large", "full"] as const).map((size) => (
           <button
             key={size}
             type="button"
@@ -557,7 +557,7 @@ export default function StoryEditor({
             </span>
           </button>
         ))}
-        {(["left", "center", "right"] as const).map((position) => (
+        {photoSelected && (["left", "center", "right"] as const).map((position) => (
           <button
             key={position}
             type="button"
@@ -579,7 +579,7 @@ export default function StoryEditor({
             )}
           </button>
         ))}
-      <button
+      {(photoSelected || gallerySelected) && <button
         type="button"
         data-tooltip="Add or edit the selected photograph's caption"
         disabled={!editor || (!photoSelected && !gallerySelected)}
@@ -601,8 +601,8 @@ export default function StoryEditor({
         className="story-tool rounded border px-3 py-2 disabled:opacity-40"
       >
         <Captions size={18} aria-label="Add or Edit Caption" />
-      </button>
-<details className="group relative ml-auto shrink-0 rounded-lg border bg-gray-50 px-3 py-2">
+      </button>}
+{(photoSelected || gallerySelected || galleryToMove || galleryPhotoSelections.length > 0) && <details className="group relative ml-auto shrink-0 rounded-lg border bg-gray-50 px-3 py-2">
         <summary className="cursor-pointer text-sm font-medium">
           Advanced
         </summary>
@@ -683,7 +683,7 @@ export default function StoryEditor({
         Cancel Move
       </button>
         </div>
-      </details>
+      </details>}
               </div>
       </div>
       <EditorContent editor={editor} />
