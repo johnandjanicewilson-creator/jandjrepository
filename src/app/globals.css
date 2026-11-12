@@ -267,3 +267,14 @@ article.blog-post {
   line-height: 1.5;
   color: #666;
 }
+
+/* Preserve text wrapping for photographs placed by the writing editor */
+.prose-travel img[data-photo-position="left"] {
+  float: left;
+  margin: 0 16px 12px 0;
+}
+
+.prose-travel img[data-photo-position="right"] {
+  float: right;
+  margin: 0 0 12px 16px;
+}

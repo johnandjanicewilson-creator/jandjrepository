@@ -80,7 +80,7 @@ export function PostContent({ html }: PostContentProps) {
           allowedAttributes: {
             ...sanitizeHtml.defaults.allowedAttributes,
             "*": ["class", "style"],
-            img: ["src", "alt", "width", "height", "loading"],
+            img: ["src", "alt", "width", "height", "loading", "data-photo-position", "data-photo-size", "data-photo-width"],
             a: ["href", "name", "target", "rel"],
           },
           allowedStyles: {
