@@ -83,6 +83,21 @@ export function PhotoGalleryView({
     picker.click();
   };
 
+  const reorderSelectedPhoto = (direction: -1 | 1) => {
+    if (!editor.isEditable || activePhoto === null || uploading) return;
+
+    const destination = activePhoto + direction;
+    if (destination < 0 || destination >= photos.length) return;
+
+    const reordered = [...photos];
+    [reordered[activePhoto], reordered[destination]] =
+      [reordered[destination], reordered[activePhoto]];
+
+    updateAttributes({ photos: reordered });
+    setActivePhoto(destination);
+    setDragWidths({});
+  };
+
   const removeSelectedPhoto = () => {
     if (!editor.isEditable || activePhoto === null) return;
     if (activePhoto < 0 || activePhoto >= photos.length) return;
@@ -287,6 +302,26 @@ export function PhotoGalleryView({
           >
             {uploading ? "Preparing..." : "Add Photo"}
           </button>
+          {([-1, 1] as const).map((direction) => (
+            <button
+              key={direction}
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                reorderSelectedPhoto(direction);
+              }}
+              disabled={
+                activePhoto === null ||
+                uploading ||
+                activePhoto + direction < 0 ||
+                activePhoto + direction >= photos.length
+              }
+              className="rounded border px-3 py-2 disabled:opacity-40"
+            >
+              {direction === -1 ? "← Move Left" : "Move Right →"}
+            </button>
+          ))}
           <button
             type="button"
             onClick={(event) => {
