@@ -100,12 +100,12 @@ export default function StoryEditor({
     picker.accept = "image/jpeg,image/png";
     picker.multiple = true;
 
+    const position = editor.state.selection.from;
+
     picker.onchange = async () => {
       const files = Array.from(picker.files || []);
 
       if (files.length === 0) return;
-
-      const position = editor.state.selection.from;
 
       try {
         const photos = [];
@@ -482,11 +482,11 @@ export default function StoryEditor({
             picker.type = "file";
             picker.accept = "image/jpeg,image/png";
 
+            const position = editor.state.selection.from;
+
             picker.onchange = async () => {
               const file = picker.files?.[0];
               if (!file) return;
-
-              const position = editor.state.selection.from;
 
               try {
                 const stagedSource = await stagePhoto(file);
