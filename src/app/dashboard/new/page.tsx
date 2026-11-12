@@ -62,6 +62,11 @@ export default function NewPostPage() {
     featuredImage: "",
     featuredImageAlt: "",
   });
+  function hasStagedPhotos(): boolean {
+    return story.includes("jj-staged:") ||
+      featuredImage.startsWith("jj-staged:");
+  }
+
   function hasPendingPhotoChanges(): boolean {
     const committed = committedPhotosRef.current;
 
@@ -156,6 +161,7 @@ export default function NewPostPage() {
       !cloudDraftId ||
       revision === null ||
       changesMade ||
+      hasStagedPhotos() ||
       recoveryAvailable ||
       savingRef.current ||
       lockRenewalRef.current
@@ -277,6 +283,11 @@ export default function NewPostPage() {
       return;
     }
 
+    if (hasStagedPhotos()) {
+      setMessage("You have photographs waiting to be saved. Click Save Photos before closing the editor.");
+      return;
+    }
+
     if (savingRef.current || changesMade || recoveryAvailable) {
       setMessage("Please save your changes successfully before finishing editing.");
       return;
@@ -314,7 +325,16 @@ export default function NewPostPage() {
     }
   }
 
-  async function handleSaveDraft(mode: "manual" | "automatic" = "manual") {
+  async function handleSavePhotos() {
+    if (!hasStagedPhotos()) {
+      setMessage("There are no new photographs waiting to be saved.");
+      return;
+    }
+
+    await handleSaveDraft("photos");
+  }
+
+  async function handleSaveDraft(mode: "manual" | "automatic" | "photos" = "manual") {
     if (cancellingRef.current) return;
     if (featuredPhotoUploading) {
       setMessage("Please wait for the featured photograph to finish uploading.");
@@ -346,9 +366,9 @@ export default function NewPostPage() {
       return;
     }
 
-    if (mode === "automatic" && hasPendingPhotoChanges()) {
+    if ((mode === "automatic" && hasPendingPhotoChanges()) || (mode === "manual" && hasStagedPhotos())) {
       if (!cloudDraftId || revision === null || !editLockHeld) {
-        setMessage("Photograph changes are backed up in this browser. Use Save Draft to commit them.");
+        setMessage("Your work is backed up in this browser, but has not been saved to Neon. Click Save Photos to upload your selected photographs and save the draft before closing.");
         return;
       }
 
@@ -397,7 +417,7 @@ export default function NewPostPage() {
       let storyToSave = story;
       let featuredImageToSave = featuredImage;
 
-      if (mode === "manual") {
+      if (mode === "photos") {
         try {
           storyToSave = await prepareStoryPhotos(story);
           featuredImageToSave = await commitStagedPhoto(featuredImage);
@@ -432,14 +452,13 @@ export default function NewPostPage() {
       }
 
       const result = await response.json();
-      if (mode === "manual") {
-        committedPhotosRef.current = {
-          story: storyToSave,
-          featuredImage: featuredImageToSave,
-          featuredImageAlt,
-        };
-
+      if (mode === "manual" || mode === "photos") {
         if (editVersionRef.current === versionBeingSaved) {
+          committedPhotosRef.current = {
+            story: storyToSave,
+            featuredImage: featuredImageToSave,
+            featuredImageAlt,
+          };
           setStory(storyToSave);
           setFeaturedImage(featuredImageToSave);
         }
@@ -473,7 +492,7 @@ export default function NewPostPage() {
       if (error instanceof Error && error.message === "EDIT_CONFLICT") {
         setMessage("Save blocked: this story may have changed or its editing lock expired. Your writing remains on this page. Do not close it.");
       } else if (error instanceof Error && error.message === "PHOTO_UPLOAD_FAILED") {
-        setMessage("A photograph could not be uploaded. Nothing was saved to Neon. Your staged photographs remain in Firefox. Please try Save Draft again.");
+        setMessage("A photograph could not be uploaded. Nothing was saved to Neon. Your staged photographs remain in Firefox. Please try Save Photos again.");
       } else {
         setRetryCount((count) => count + 1);
         setMessage("Not saved to Neon — connection problem. Keep this page open. We will try again automatically.");
@@ -1067,6 +1086,16 @@ setCreatingJourney(false);
 
       <button
         type="button"
+        onClick={() => void handleSavePhotos()}
+        disabled={!loaded || recoveryAvailable || !hasStagedPhotos() ||
+          (cloudDraftId !== null && !editLockHeld)}
+        className="ml-3 mt-6 rounded-lg bg-indigo-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Save Photos
+      </button>
+
+      <button
+        type="button"
         onClick={() => window.open("/dashboard/preview", "_blank")}
         disabled={!loaded}
         className="ml-3 mt-6 rounded-lg bg-slate-700 px-6 py-3 font-semibold text-white disabled:opacity-50"
@@ -1078,7 +1107,7 @@ setCreatingJourney(false);
         <button
           type="button"
           onClick={handleFinishEditing}
-          disabled={!loaded || changesMade || recoveryAvailable || savingRef.current}
+          disabled={!loaded || changesMade || recoveryAvailable || savingRef.current || hasStagedPhotos()}
           className="ml-3 mt-6 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           Save & Close Editor
