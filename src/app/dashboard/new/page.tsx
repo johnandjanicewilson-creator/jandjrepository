@@ -1,8 +1,13 @@
 "use client";
 
+import { extractPhotoState } from "@/lib/dashboard/uploads/photoState";
+import { prepareStoryPhotos } from "@/lib/dashboard/uploads/prepareStoryPhotos";
+import { commitStagedPhoto } from "@/lib/dashboard/uploads/commitStagedPhoto";
+
 import { useEffect, useRef, useState } from "react";
 import { getDraft, saveDraft } from "@/lib/dashboard/drafts";
-import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
+import { stagePhoto } from "@/lib/dashboard/uploads/stagePhoto";
+import { StagedPhotoImage } from "@/components/editor/StagedPhotoImage";
 import StoryEditor from "@/components/editor/StoryEditor";
 
 export default function NewPostPage() {
@@ -48,6 +53,25 @@ export default function NewPostPage() {
     featuredImageAlt: string;
     revision: number;
   } | null>(null);
+  const committedPhotosRef = useRef<{
+    story: string;
+    featuredImage: string;
+    featuredImageAlt: string;
+  }>({
+    story: "",
+    featuredImage: "",
+    featuredImageAlt: "",
+  });
+  function hasPendingPhotoChanges(): boolean {
+    const committed = committedPhotosRef.current;
+
+    return (
+      extractPhotoState(story) !== extractPhotoState(committed.story) ||
+      featuredImage !== committed.featuredImage ||
+      featuredImageAlt !== committed.featuredImageAlt
+    );
+  }
+
   const cancellingRef = useRef(false);
   const savingRef = useRef(false);
   const lockRenewalRef = useRef(false);
@@ -55,6 +79,7 @@ export default function NewPostPage() {
   const [changesMade, setChangesMade] = useState(false);
   const editVersionRef = useRef(0);
   const [recoveryAvailable, setRecoveryAvailable] = useState(false);
+  const [recoverySource, setRecoverySource] = useState<"browser" | "neon" | null>(null);
   const [recoveryDraft, setRecoveryDraft] = useState<{
     title: string;
     story: string;
@@ -289,7 +314,7 @@ export default function NewPostPage() {
     }
   }
 
-  async function handleSaveDraft() {
+  async function handleSaveDraft(mode: "manual" | "automatic" = "manual") {
     if (cancellingRef.current) return;
     if (featuredPhotoUploading) {
       setMessage("Please wait for the featured photograph to finish uploading.");
@@ -321,6 +346,47 @@ export default function NewPostPage() {
       return;
     }
 
+    if (mode === "automatic" && hasPendingPhotoChanges()) {
+      if (!cloudDraftId || revision === null || !editLockHeld) {
+        setMessage("Photograph changes are backed up in this browser. Use Save Draft to commit them.");
+        return;
+      }
+
+      if (savingRef.current) return;
+      savingRef.current = true;
+
+      try {
+        const response = await fetch(
+          `/api/dashboard/drafts/${cloudDraftId}/writing-autosave`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title,
+              story,
+              date,
+              destination,
+              series,
+              excerpt,
+              featuredImage,
+              featuredImageAlt,
+              revision,
+              lockSession: lockSessionRef.current,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Writing autosave failed");
+
+        setMessage("Writing recovery copy saved to Neon. Photograph changes remain uncommitted.");
+      } catch {
+        setMessage("Writing recovery copy not saved to Neon. Your browser backup remains available.");
+      } finally {
+        savingRef.current = false;
+      }
+      return;
+    }
+
     if (savingRef.current) return;
     savingRef.current = true;
 
@@ -328,6 +394,25 @@ export default function NewPostPage() {
     setMessage("Saving to Neon...");
 
     try {
+      let storyToSave = story;
+      let featuredImageToSave = featuredImage;
+
+      if (mode === "manual") {
+        try {
+          storyToSave = await prepareStoryPhotos(story);
+          featuredImageToSave = await commitStagedPhoto(featuredImage);
+        } catch {
+          throw new Error("PHOTO_UPLOAD_FAILED");
+        }
+      }
+
+      if (
+        storyToSave.includes("jj-staged:") ||
+        featuredImageToSave.startsWith("jj-staged:")
+      ) {
+        throw new Error("PHOTO_UPLOAD_FAILED");
+      }
+
       const url = cloudDraftId
         ? `/api/dashboard/drafts/${cloudDraftId}`
         : "/api/dashboard/drafts";
@@ -335,7 +420,7 @@ export default function NewPostPage() {
       const response = await fetch(url, {
         method: cloudDraftId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, story, date, destination, series, excerpt, featuredImage, featuredImageAlt, revision, lockSession: lockSessionRef.current, backedUpAt: new Date().toISOString() }),
+        body: JSON.stringify({ title, story: storyToSave, date, destination, series, excerpt, featuredImage: featuredImageToSave, featuredImageAlt, revision, lockSession: lockSessionRef.current, backedUpAt: new Date().toISOString() }),
       });
 
       if (!response.ok) {
@@ -347,6 +432,18 @@ export default function NewPostPage() {
       }
 
       const result = await response.json();
+      if (mode === "manual") {
+        committedPhotosRef.current = {
+          story: storyToSave,
+          featuredImage: featuredImageToSave,
+          featuredImageAlt,
+        };
+
+        if (editVersionRef.current === versionBeingSaved) {
+          setStory(storyToSave);
+          setFeaturedImage(featuredImageToSave);
+        }
+      }
       setCloudDraftId(result.id);
       if (!cloudDraftId) {
         setEditLockHeld(true);
@@ -375,6 +472,8 @@ export default function NewPostPage() {
       setChangesMade(true);
       if (error instanceof Error && error.message === "EDIT_CONFLICT") {
         setMessage("Save blocked: this story may have changed or its editing lock expired. Your writing remains on this page. Do not close it.");
+      } else if (error instanceof Error && error.message === "PHOTO_UPLOAD_FAILED") {
+        setMessage("A photograph could not be uploaded. Nothing was saved to Neon. Your staged photographs remain in Firefox. Please try Save Draft again.");
       } else {
         setRetryCount((count) => count + 1);
         setMessage("Not saved to Neon — connection problem. Keep this page open. We will try again automatically.");
@@ -472,6 +571,11 @@ export default function NewPostPage() {
               featuredImageAlt: draft.featuredImageAlt ?? "",
               revision: draft.revision,
             };
+            committedPhotosRef.current = {
+              story: draft.story ?? "",
+              featuredImage: draft.featuredImage ?? "",
+              featuredImageAlt: draft.featuredImageAlt ?? "",
+            };
             setCloudDraftId(draft.id);
             setRevision(draft.revision);
             setTitle(draft.title ?? "");
@@ -483,6 +587,32 @@ setCreatingJourney(false);
             setFeaturedImage(draft.featuredImage ?? "");
             setFeaturedImageAlt(draft.featuredImageAlt ?? "");
             setExcerpt(draft.excerpt ?? "");
+
+            const recovery = draft.writingAutosave;
+            if (
+              recovery &&
+              typeof recovery === "object" &&
+              typeof recovery.title === "string" &&
+              typeof recovery.story === "string" &&
+              typeof recovery.date === "string" &&
+              typeof recovery.destination === "string" &&
+              typeof recovery.backedUpAt === "string"
+            ) {
+              setRecoveryDraft({
+                title: recovery.title,
+                story: recovery.story,
+                date: recovery.date,
+                destination: recovery.destination,
+                series: recovery.series ?? "",
+                excerpt: recovery.excerpt ?? "",
+                featuredImage: recovery.featuredImage ?? "",
+                featuredImageAlt: recovery.featuredImageAlt ?? "",
+                backedUpAt: recovery.backedUpAt,
+              });
+              setRecoverySource("neon");
+              setRecoveryAvailable(true);
+            }
+
             setLoaded(true);
           })
           .catch((error) => {
@@ -523,7 +653,7 @@ setCreatingJourney(false);
   }, []);
 
   useEffect(() => {
-    if (!loaded || changesMade) return;
+    if (!loaded || changesMade || recoveryAvailable) return;
 
     try {
       const backupKey = `jj-travel-backup-${cloudDraftId || "new"}`;
@@ -555,7 +685,8 @@ setCreatingJourney(false);
 
       if (differs) {
         setRecoveryDraft(backup);
-        setRecoveryAvailable(true);
+        setRecoverySource("browser");
+      setRecoveryAvailable(true);
       }
     } catch {
       // Ignore unavailable or damaged browser backups.
@@ -589,7 +720,7 @@ setCreatingJourney(false);
     if (!loaded || !changesMade || recoveryAvailable || cancellingRef.current) return;
 
     const timer = setTimeout(() => {
-      void handleSaveDraft();
+      void handleSaveDraft("automatic");
     }, 30000);
 
     return () => clearTimeout(timer);
@@ -611,10 +742,11 @@ setCreatingJourney(false);
           role="alert"
           className="mt-6 rounded-lg border-2 border-amber-500 bg-amber-50 p-5 text-gray-900"
         >
-          <h2 className="text-lg font-bold">Unsaved Browser Copy Found</h2>
+          <h2 className="text-lg font-bold">Unsaved {recoverySource === "neon" ? "Neon Recovery" : "Browser"} Copy Found</h2>
           <p className="mt-2">
-            Firefox has a different copy of this story. It may contain
-            writing that was not saved to Neon.
+            {recoverySource === "neon"
+              ? "Neon has a recovery copy containing unfinished writing or photograph changes. These changes have not been committed to the story."
+              : "Firefox has a different copy of this story. It may contain writing that was not saved to Neon."}
           </p>
           <p className="mt-2 text-sm">
             We will let you choose which version to keep.
@@ -636,17 +768,50 @@ setCreatingJourney(false);
               setFeaturedImageAlt(recoveryDraft.featuredImageAlt ?? "");
               editVersionRef.current += 1;
               setChangesMade(true);
+              const recoveredFrom = recoverySource === "neon" ? "Neon" : "Firefox";
               setRecoveryAvailable(false);
               setRecoveryDraft(null);
-              setMessage("Browser copy recovered. Save to Neon to keep it.");
+              setRecoverySource(null);
+              setMessage(`${recoveredFrom} recovery copy restored. Use Save Draft to keep these changes.`);
             }}
           >
-            Recover Browser Copy
+            Recover {recoverySource === "neon" ? "Neon" : "Browser"} Copy
           </button>
           <button
             type="button"
             className="ml-3 mt-4 rounded-lg border border-gray-500 px-4 py-2 font-semibold"
-            onClick={() => {
+            onClick={async () => {
+              if (recoverySource === "neon") {
+                if (!cloudDraftId || revision === null || !editLockHeld) {
+                  setMessage("Cannot discard Neon recovery without an active editing lock.");
+                  return;
+                }
+
+                try {
+                  const response = await fetch(
+                    `/api/dashboard/drafts/${cloudDraftId}/writing-autosave`,
+                    {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        revision,
+                        lockSession: lockSessionRef.current,
+                      }),
+                    }
+                  );
+
+                  if (!response.ok) throw new Error("Recovery cleanup failed");
+
+                  setRecoveryAvailable(false);
+                  setRecoveryDraft(null);
+                  setRecoverySource(null);
+                  setMessage("Keeping the saved Neon story. Unfinished Neon recovery was discarded.");
+                } catch {
+                  setMessage("Could not discard Neon recovery. Please try again.");
+                }
+                return;
+              }
+
               try {
                 const backupKey = `jj-travel-backup-${cloudDraftId || "new"}`;
                 const oldBackup = localStorage.getItem(backupKey);
@@ -661,6 +826,7 @@ setCreatingJourney(false);
               }
               setRecoveryAvailable(false);
               setRecoveryDraft(null);
+              setRecoverySource(null);
               setMessage("Keeping the Neon version. The browser copy was archived.");
             }}
           >
@@ -824,14 +990,14 @@ setCreatingJourney(false);
               return;
             }
             setFeaturedPhotoUploading(true);
-            setMessage("Uploading featured photograph...");
+            setMessage("Preparing featured photograph...");
             try {
-              const photoUrl = await uploadPhoto(file);
+              const photoUrl = await stagePhoto(file);
               setFeaturedImage(photoUrl);
               setFeaturedImageAlt(file.name);
               editVersionRef.current += 1;
               setChangesMade(true);
-              setMessage("Featured photograph uploaded. Save Draft to keep it with this story.");
+              setMessage("Featured photograph ready. Save Draft to upload and keep it with this story.");
             } catch (error) {
               setMessage(error instanceof Error ? error.message : "Photograph upload failed.");
             } finally {
@@ -845,7 +1011,7 @@ setCreatingJourney(false);
       {featuredImage && (
         <div className="mt-4">
           <p className="mb-2 text-sm font-semibold">Featured Photograph Preview</p>
-          <img
+          <StagedPhotoImage
             src={featuredImage}
             alt={featuredImageAlt || "Featured travel photograph"}
             className="max-h-72 max-w-full rounded-lg border object-contain"
@@ -892,7 +1058,7 @@ setCreatingJourney(false);
  </div>
       <button
         type="button"
-        onClick={handleSaveDraft}
+        onClick={() => void handleSaveDraft("manual")}
         disabled={!loaded || recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
         className="mt-6 rounded-lg bg-green-800 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >

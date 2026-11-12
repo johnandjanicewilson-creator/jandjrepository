@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
+import { stagePhoto } from "@/lib/dashboard/uploads/stagePhoto";
+import { StagedPhotoImage } from "./StagedPhotoImage";
 
 type GalleryPhoto = {
   src: string;
@@ -62,7 +63,7 @@ export function PhotoGalleryView({
       try {
         const additions = [];
         for (const file of files) {
-          const src = await uploadPhoto(file);
+          const src = await stagePhoto(file);
           additions.push({ src, alt: file.name });
         }
 
@@ -72,7 +73,7 @@ export function PhotoGalleryView({
         });
       } catch (error) {
         window.alert(
-          error instanceof Error ? error.message : "Photo upload failed"
+          error instanceof Error ? error.message : "Could not stage photograph"
         );
       } finally {
         setUploading(false);
@@ -233,10 +234,9 @@ export function PhotoGalleryView({
                 : ""
             }
           >
-            <img
+            <StagedPhotoImage
               src={photo.src}
               alt={photo.alt || ""}
-              draggable={false}
               style={{
                 width: "100%",
                 height: "auto",
@@ -285,7 +285,7 @@ export function PhotoGalleryView({
             disabled={uploading}
             className="rounded border px-3 py-2 disabled:opacity-40"
           >
-            {uploading ? "Uploading..." : "Add Photo"}
+            {uploading ? "Preparing..." : "Add Photo"}
           </button>
           <button
             type="button"

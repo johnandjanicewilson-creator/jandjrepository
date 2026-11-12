@@ -74,7 +74,7 @@ export async function PUT(
             ),
             '{featuredImageAlt}',
             to_jsonb(${featuredImageAlt}::text)
-          ),
+          ) - '_writingAutosave',
           updated_at = NOW(),
           revision = revision + 1,
           lock_expires_at = NOW() + INTERVAL '5 minutes'
@@ -125,7 +125,8 @@ export async function GET(
              original_metadata->>'featuredImage' AS "featuredImage",
              original_metadata->>'featuredImageAlt' AS "featuredImageAlt",
              original_metadata->>'excerpt' AS "excerpt",
-             original_metadata->>'series' AS "series"
+             original_metadata->>'series' AS "series",
+             original_metadata->'_writingAutosave' AS "writingAutosave"
       FROM travel_drafts
       WHERE id = ${id}
       LIMIT 1

@@ -26,7 +26,7 @@ import {
 import { SizedImage } from "./SizedImage";
 import { PhotoGallery } from "./PhotoGallery";
 import { PhotoLocationMarker } from "./PhotoLocationMarker";
-import { uploadPhoto } from "@/lib/dashboard/uploads/uploadPhoto";
+import { stagePhoto } from "@/lib/dashboard/uploads/stagePhoto";
 import { InsetText } from "./InsetText";
 
 type StoryEditorProps = {
@@ -111,7 +111,7 @@ export default function StoryEditor({
         const photos = [];
 
         for (const file of files) {
-          const photoUrl = await uploadPhoto(file);
+          const photoUrl = await stagePhoto(file);
           photos.push({ src: photoUrl, alt: file.name });
         }
 
@@ -487,29 +487,21 @@ export default function StoryEditor({
               if (!file) return;
 
               const position = editor.state.selection.from;
-              const form = new FormData();
-              form.append("file", file);
 
               try {
-                const response = await fetch("/api/dashboard/upload", {
-                  method: "POST",
-                  body: form,
-                });
-                const result = await response.json();
-
-                if (!response.ok) {
-                  throw new Error(result.error || "Upload failed");
-                }
+                const stagedSource = await stagePhoto(file);
 
                 editor.chain().focus()
                   .insertContentAt(position, {
                     type: "image",
-                    attrs: { src: result.url, alt: file.name },
+                    attrs: { src: stagedSource, alt: file.name },
                   })
                   .run();
               } catch (error) {
                 window.alert(
-                  error instanceof Error ? error.message : "Upload failed"
+                  error instanceof Error
+                    ? error.message
+                    : "Could not prepare photograph"
                 );
               }
             };

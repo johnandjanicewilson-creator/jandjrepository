@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import { StagedPhotoImage } from "./StagedPhotoImage";
 
 export function PhotoView({ node, selected, updateAttributes, editor }: NodeViewProps) {
   const { src, alt, photoCaption, photoSize, photoPosition, photoWidth } = node.attrs;
@@ -77,12 +78,11 @@ export function PhotoView({ node, selected, updateAttributes, editor }: NodeView
       }}
       className={selected ? "outline outline-2 outline-blue-500" : ""}
     >
-      <img
-        data-drag-handle
+      <StagedPhotoImage
+        dragHandle
         src={src}
         alt={alt || ""}
         style={{ width: "100%", height: "auto", display: "block" }}
-        draggable={false}
       />
       {editor.isEditable && selected && (
         <button
