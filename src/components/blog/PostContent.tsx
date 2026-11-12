@@ -86,6 +86,7 @@ export function PostContent({ html }: PostContentProps) {
           allowedStyles: {
             "*": {
               "text-align": [/^(left|right|center)$/],
+              "float": [/^(left|right|none)$/],
               "margin": [/^[0-9.]+(px|rem|em|%)?(\s+[0-9.]+(px|rem|em|%)?)*$/],
               "margin-top": [/^[0-9.]+(px|rem|em|%)$/],
               "max-width": [/^[0-9.]+(px|rem|em|%)$/],
