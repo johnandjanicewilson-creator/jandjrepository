@@ -1,4 +1,4 @@
-import { ContactForm } from "@/components/contact/ContactForm";
+import Script from "next/script";
 import { Container } from "@/components/ui/Container";
 import { SITE } from "@/lib/constants";
 
@@ -32,15 +32,23 @@ export default function ContactPage() {
                 {SITE.email}
               </a>
             </p>
-            <p>
-              <span className="font-semibold text-sage">Response time</span>
-              <br />
-              <span className="text-muted">We typically reply within 2–3 days.</span>
-            </p>
+            <a
+              href={`mailto:${SITE.email}`}
+              className="inline-flex rounded-full bg-accent px-6 py-3 font-semibold text-white hover:bg-accent-dark"
+            >
+              Email John &amp; Janice
+            </a>
           </div>
         </div>
 
-        <ContactForm />
+        <div className="min-w-0">
+        <Script
+          id="emailoctopus-travel-signup"
+          src="https://eomail6.com/form/40ffa52c-331e-11f0-99c1-2f1382fb75ac.js"
+          data-form="40ffa52c-331e-11f0-99c1-2f1382fb75ac"
+          strategy="afterInteractive"
+        />
+      </div>
       </div>
     </Container>
   );

@@ -5,7 +5,7 @@ export const SITE = {
   description:
     "A travel blog documenting adventures around the world by John and Janice — from city breaks to remote trails, since 2011.",
   url: "https://johnandjanice.com",
-  email: "hello@johnandjanice.com",
+  email: "TravelsWithJandJ@gmail.com",
   since: 2011,
 } as const;
 
