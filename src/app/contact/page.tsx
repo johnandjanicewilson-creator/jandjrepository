@@ -1,4 +1,4 @@
-import Script from "next/script";
+import { EmailOctopusSignup } from "@/components/contact/EmailOctopusSignup";
 import { Container } from "@/components/ui/Container";
 import { SITE } from "@/lib/constants";
 
@@ -41,14 +41,7 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <div className="min-w-0">
-        <Script
-          id="emailoctopus-travel-signup"
-          src="https://eomail6.com/form/40ffa52c-331e-11f0-99c1-2f1382fb75ac.js"
-          data-form="40ffa52c-331e-11f0-99c1-2f1382fb75ac"
-          strategy="afterInteractive"
-        />
-      </div>
+        <EmailOctopusSignup />
       </div>
     </Container>
   );
