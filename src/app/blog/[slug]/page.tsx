@@ -7,6 +7,7 @@ import { PostContent } from "@/components/blog/PostContent";
 import { PostMdx } from "@/components/blog/PostMdx";
 import { RelatedPosts } from "@/components/blog/RelatedPosts";
 import { SeriesBanner } from "@/components/blog/SeriesBanner";
+import { getPublicJourneyPosts } from "@/lib/journeys";
 import { markdownToHtml } from "@/lib/markdown";
 import {
   getAllPostSlugs,
@@ -74,6 +75,17 @@ export default async function PostPage({ params }: PostPageProps) {
     featuredImageAlt: typeof newMeta.featuredImageAlt === "string" ? newMeta.featuredImageAlt : "",
     categories: [], tags: [],
   };
+  const journey = post.series?.trim()
+    ? await getPublicJourneyPosts(slugify(post.series.trim()))
+    : undefined;
+  const journeyIndex = journey?.posts.findIndex((item) => item.slug === slug) ?? -1;
+  const previousStory = journeyIndex > 0
+    ? journey!.posts[journeyIndex - 1]
+    : undefined;
+  const nextStory = journey && journeyIndex >= 0
+    ? journey.posts[journeyIndex + 1]
+    : undefined;
+
   const displayDate = getPostDisplayDate(post);
   const related = original ? getRelatedPosts(post) : [];
 
@@ -158,6 +170,38 @@ export default async function PostPage({ params }: PostPageProps) {
 
         <div className="mt-10">{body}</div>
       </section>
+
+      {journey && journeyIndex >= 0 && (
+        <nav
+          aria-label="Journey navigation"
+          className="mx-auto my-10 max-w-4xl px-6"
+        >
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <p className="mb-4 text-center text-sm text-muted">
+              {journey.name} — Story {journeyIndex + 1} of {journey.posts.length}
+            </p>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                {previousStory && (
+                  <Link href={`/blog/${previousStory.slug}`} className="font-semibold text-accent hover:underline">
+                    ← Previous Story
+                  </Link>
+                )}
+              </div>
+              <Link href={`/journeys/${slugify(journey.name)}`} className="font-semibold text-accent hover:underline">
+                Back to Journey
+              </Link>
+              <div>
+                {nextStory && (
+                  <Link href={`/blog/${nextStory.slug}`} className="font-semibold text-accent hover:underline">
+                    Next Story →
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </nav>
+      )}
 
       <RelatedPosts posts={related} />
     </article>
