@@ -52,6 +52,14 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
           {posts.length} {posts.length === 1 ? "story" : "stories"}, in order
           from the beginning of the trip.
         </p>
+        {posts.length > 0 && (
+          <Link
+            href={`/blog/${posts[0].slug}`}
+            className="mt-6 inline-flex items-center rounded-xl bg-sage px-6 py-3 font-semibold text-white transition hover:bg-sage-dark"
+          >
+            Start This Journey →
+          </Link>
+        )}
       </header>
 
       <ol className="mt-10 space-y-6">
