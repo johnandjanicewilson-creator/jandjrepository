@@ -72,6 +72,19 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
         )}
       </header>
 
+      {slug === "ten-weeks-across-europe-2016" && (
+        <div className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-2xl shadow-md">
+          <Image
+            src="/images/ten-weeks-europe-banner.png"
+            alt="John and Janice at Peterhof Palace, celebrating their 2016 European adventure"
+            fill
+            priority
+            className="object-contain"
+            sizes="(max-width: 768px) 100vw, 1100px"
+          />
+        </div>
+      )}
+
       {chapters ? (
         <div className="mt-10 space-y-4">
           {chapters.map((chapter, chapterIndex) => (
