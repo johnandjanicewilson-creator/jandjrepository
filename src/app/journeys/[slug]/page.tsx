@@ -39,10 +39,10 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
   const chapters =
     slug === "ten-weeks-across-europe-2016" && posts.length === 24
       ? [
-          { title: "Across the Atlantic and Northern Europe", start: 0, end: 4 },
-          { title: "Central Europe", start: 4, end: 11 },
-          { title: "Exploring Italy", start: 11, end: 17 },
-          { title: "Greece, Israel and Istanbul", start: 17, end: 24 },
+          { title: "Across the Atlantic and Northern Europe", description: "The Atlantic crossing, Norwegian fjords, St. Petersburg, and the Baltic capitals.", start: 0, end: 4 },
+          { title: "Central Europe", description: "Berlin, Prague, Poland, Budapest, Vienna, Switzerland, and Milan.", start: 4, end: 11 },
+          { title: "Exploring Italy", description: "Venice, Florence, Tuscany, the Amalfi Coast, Pompeii, and Rome.", start: 11, end: 17 },
+          { title: "Greece, Israel and Istanbul", description: "Athens, the Greek Isles, the Holy Land, and Istanbul.", start: 17, end: 24 },
         ]
       : null;
 
@@ -79,10 +79,34 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
               key={chapter.title}
               className="group rounded-2xl border border-border bg-card p-5"
             >
-              <summary className="cursor-pointer font-display text-xl font-semibold text-sage">
-                Chapter {chapterIndex + 1}: {chapter.title}
-                <span className="ml-2 text-sm font-normal text-muted">
-                  ({chapter.end - chapter.start} stories)
+              <summary className="flex cursor-pointer list-none flex-col gap-4 sm:flex-row sm:items-center [&::-webkit-details-marker]:hidden">
+                <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-xl sm:aspect-[4/3] sm:w-56">
+                  {posts[chapter.start].featuredImage ? (
+                    <Image
+                      src={posts[chapter.start].featuredImage}
+                      alt={posts[chapter.start].featuredImageAlt ?? chapter.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, 224px"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-sage" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display text-xl font-semibold text-sage">
+                    Chapter {chapterIndex + 1}: {chapter.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted">
+                    {chapter.end - chapter.start} stories
+                  </p>
+                  <p className="mt-2 text-sm">
+                    {chapter.description}
+                  </p>
+                </div>
+                <span aria-hidden="true" className="text-2xl text-sage">
+                  <span className="group-open:hidden">⌄</span>
+                  <span className="hidden group-open:inline">⌃</span>
                 </span>
               </summary>
               <ol className="mt-6 space-y-6">
