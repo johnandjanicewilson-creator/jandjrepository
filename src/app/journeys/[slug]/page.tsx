@@ -36,6 +36,16 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
 
   const { name, posts } = journey;
 
+  const chapters =
+    slug === "ten-weeks-across-europe-2016" && posts.length === 24
+      ? [
+          { title: "Across the Atlantic and Northern Europe", start: 0, end: 4 },
+          { title: "Central Europe", start: 4, end: 11 },
+          { title: "Exploring Italy", start: 11, end: 17 },
+          { title: "Greece, Israel and Istanbul", start: 17, end: 24 },
+        ]
+      : null;
+
   return (
     <Container className="py-12 lg:py-16">
       <header className="max-w-2xl">
@@ -62,6 +72,40 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
         )}
       </header>
 
+      {chapters ? (
+        <div className="mt-10 space-y-4">
+          {chapters.map((chapter, chapterIndex) => (
+            <details
+              key={chapter.title}
+              className="group rounded-2xl border border-border bg-card p-5"
+            >
+              <summary className="cursor-pointer font-display text-xl font-semibold text-sage">
+                Chapter {chapterIndex + 1}: {chapter.title}
+                <span className="ml-2 text-sm font-normal text-muted">
+                  ({chapter.end - chapter.start} stories)
+                </span>
+              </summary>
+              <ol className="mt-6 space-y-6">
+                {posts.slice(chapter.start, chapter.end).map((post, i) => (
+                  <li key={post.slug}>
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      className="block rounded-xl border border-border p-4 transition hover:shadow-md"
+                    >
+                      <span className="text-sm text-muted">
+                        Story {chapter.start + i + 1}
+                      </span>
+                      <h2 className="font-display text-lg font-semibold text-sage">
+                        {post.title}
+                      </h2>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          ))}
+        </div>
+      ) : (
       <ol className="mt-10 space-y-6">
         {posts.map((post, i) => (
           <li key={post.slug}>
@@ -100,6 +144,7 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
           </li>
         ))}
       </ol>
+      )}
     </Container>
   );
 }
