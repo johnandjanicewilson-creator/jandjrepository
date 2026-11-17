@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 interface BlogFiltersProps {
   destinations?: string[];
@@ -62,7 +61,6 @@ export function BlogFilters({
   const categoryOptions = dedupeOptions(
     categories.map((c) => ({ label: c, value: c })),
   );
-  const tagList = [...new Set(tags.filter(Boolean))];
 
   return (
     <aside className="space-y-6 rounded-2xl border border-border bg-card p-5 lg:sticky lg:top-24">
@@ -108,18 +106,7 @@ export function BlogFilters({
         emptyLabel="All categories"
       />
 
-      {tagList.length > 0 && (
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
-            Browse tags
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {tagList.map((tag) => (
-              <button key={tag} type="button" onClick={() => updateParam("tag", activeTag === tag ? "" : tag)} className={cn("rounded-full px-2.5 py-1 text-xs font-medium transition", activeTag === tag ? "bg-sage text-white" : "bg-cream text-sage hover:bg-sage-light")}>#{tag}</button>
-            ))}
-          </div>
-        </div>
-      )}
+
     </aside>
   );
 }
