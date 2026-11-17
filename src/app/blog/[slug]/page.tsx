@@ -138,26 +138,6 @@ export default async function PostPage({ params }: PostPageProps) {
             {publishedTitle}
           </h1>
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            {post.categories.map((category) => (
-              <Link
-                key={category}
-                href={`/blog?category=${encodeURIComponent(category)}`}
-                className="rounded-full bg-sage-light px-3 py-1 text-xs font-semibold text-sage"
-              >
-                {category}
-              </Link>
-            ))}
-            {post.tags.map((tag) => (
-              <Link
-                key={tag}
-                href={`/blog?tag=${encodeURIComponent(tag)}`}
-                className="rounded-full bg-cream px-3 py-1 text-xs font-medium text-muted"
-              >
-                #{tag}
-              </Link>
-            ))}
-          </div>
         </header>
 
         <SeriesBanner series={post.series} />
