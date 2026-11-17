@@ -39,7 +39,7 @@ export default async function JourneysPage() {
                   src={journey.slug === "ten-weeks-across-europe-2016" ? "/images/ten-weeks-europe-banner-clean.png" : journey.coverImage}
                   alt={journey.name}
                   fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
+                  className="object-cover brightness-110 saturate-105 transition duration-500 group-hover:scale-105"
                   sizes="(max-width: 640px) 100vw, 50vw"
                 />
               ) : (
@@ -52,7 +52,7 @@ export default async function JourneysPage() {
                     {journey.years}
                   </p>
                 )}
-                <h2 className="font-display text-2xl font-semibold">
+                <h2 className="font-display text-3xl font-semibold italic">
                   {journey.name}
                 </h2>
                 <p className="mt-1 text-sm text-white/85">

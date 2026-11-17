@@ -55,7 +55,7 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
         >
           ← All journeys
         </Link>
-        <h1 className="mt-3 font-display text-4xl font-semibold text-sage sm:text-5xl">
+        <h1 className="mt-3 font-display text-4xl font-semibold italic text-sage sm:text-5xl">
           {name}
         </h1>
         <p className="mt-3 text-lg text-muted">
