@@ -26,21 +26,21 @@ export default async function JourneysPage() {
         </p>
       </header>
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid gap-6 sm:grid-cols-2">
         {journeys.map((journey) => (
           <Link
             key={journey.slug}
             href={`/journeys/${journey.slug}`}
             className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
-            <div className="relative aspect-[4/3]">
+            <div className="relative aspect-[16/9]">
               {journey.coverImage ? (
                 <Image
-                  src={journey.coverImage}
+                  src={journey.slug === "ten-weeks-across-europe-2016" ? "/images/ten-weeks-europe-banner-clean.png" : journey.coverImage}
                   alt={journey.name}
                   fill
                   className="object-cover transition duration-500 group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  sizes="(max-width: 640px) 100vw, 50vw"
                 />
               ) : (
                 <div className="absolute inset-0 bg-sage" />
