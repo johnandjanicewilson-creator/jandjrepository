@@ -75,7 +75,7 @@ export default async function JourneyPage({ params }: JourneyPageProps) {
       {slug === "ten-weeks-across-europe-2016" && (
         <div className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-2xl shadow-md">
           <Image
-            src="/images/ten-weeks-europe-banner.png"
+            src="/images/ten-weeks-europe-banner-clean.png"
             alt="John and Janice at Peterhof Palace, celebrating their 2016 European adventure"
             fill
             priority
