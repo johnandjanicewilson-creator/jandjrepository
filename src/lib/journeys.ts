@@ -85,13 +85,24 @@ export function getAllJourneySlugs(): string[] {
   return getJourneys().map((j) => j.slug);
 }
 
+const presidentialLibraryExtras = new Set([
+  "2013-08-09-dateline-july-26-2013-ronald-reagan-presidential-library",
+  "2013-08-24-dateline-july-29-2013-richard-m-nixon-library",
+  "2017-05-15-texas-presidential-libraries",
+  "2017-05-28-clinton-library",
+  "2017-07-18-carter-library",
+  "2018-07-06-herbert-hoover",
+]);
+
 /** Public Journey stories, including approved Neon publications. */
 export async function getPublicJourneyPosts(
   slug: string,
 ): Promise<{ name: string; posts: Post[] } | undefined> {
   const posts = await getJourneyStories();
   const matching = posts.filter(
-    (post) => post.series?.trim() && slugify(post.series.trim()) === slug,
+    (post) =>
+      (post.series?.trim() && slugify(post.series.trim()) === slug) ||
+      (slug === "presidential-libraries" && presidentialLibraryExtras.has(post.slug)),
   );
 
   if (!matching.length) return undefined;
@@ -154,7 +165,14 @@ export async function getPublicJourneys(): Promise<Journey[]> {
     journeys.push({
       name,
       slug,
-      postCount: group.length,
+      postCount:
+        slug === "presidential-libraries"
+          ? new Set([
+              ...group.map((post) => post.slug),
+              ...posts.filter((post) => presidentialLibraryExtras.has(post.slug))
+                .map((post) => post.slug),
+            ]).size
+          : group.length,
       coverImage: newest.featuredImage,
       latestDate: newest.date,
       years,
