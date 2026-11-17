@@ -39,7 +39,7 @@ export default async function JourneysPage() {
                   src={journey.slug === "ten-weeks-across-europe-2016" ? "/images/ten-weeks-europe-banner-clean.png" : journey.coverImage}
                   alt={journey.name}
                   fill
-                  className="object-cover brightness-110 saturate-105 transition duration-500 group-hover:scale-105"
+                  className="object-cover brightness-[1.25] saturate-125 transition duration-500 group-hover:scale-105"
                   sizes="(max-width: 640px) 100vw, 50vw"
                 />
               ) : (
