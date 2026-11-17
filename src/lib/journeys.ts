@@ -103,6 +103,16 @@ export async function getPublicJourneyPosts(
   return { name: matching[0].series!.trim(), posts: matching };
 }
 
+const hiddenPublicJourneys = new Set([
+  "bermuda-2026",
+  "new-orleans-2025",
+  "caribbean-cruise-2022",
+  "south-africa-2006",
+  "cruises",
+  "visits-with-friends-and-family",
+  "hawaii-clay-s-wedding-2011",
+]);
+
 /** Public Journey listing, including approved Neon publications. */
 export async function getPublicJourneys(): Promise<Journey[]> {
   const posts = await getJourneyStories();
@@ -121,6 +131,8 @@ export async function getPublicJourneys(): Promise<Journey[]> {
   const journeys: Journey[] = [];
 
   for (const [slug, group] of groups) {
+    if (hiddenPublicJourneys.has(slug)) continue;
+
     const byDateDesc = [...group].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
