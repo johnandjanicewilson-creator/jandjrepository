@@ -1,0 +1,84 @@
+[
+  {
+    "place": "pearl-harbor",
+    "country": "United States",
+    "state": "Hawaii",
+    "latitude": 21.3557747,
+    "longitude": -157.9991492,
+    "stories": [
+      {
+        "title": "Dateline April 1, 2011, Pearl Harbor, Oahu",
+        "file": "2011-04-02-dateline-april-1-2011-oahu-pearl-harbor.md"
+      }
+    ]
+  },
+  {
+    "place": "akaka-falls",
+    "country": "United States",
+    "state": "Hawaii",
+    "latitude": 19.8531832,
+    "longitude": -155.1561224,
+    "stories": [
+      {
+        "title": "Dateline April 11, 2011, Clay's Wedding and the Big Island",
+        "file": "2011-04-12-dateline-april-11-2011-clays-wedding-and-the-big-island.md"
+      }
+    ]
+  },
+  {
+    "place": "whidbey-island",
+    "country": "United States",
+    "state": "Washington",
+    "latitude": 48.1581426,
+    "longitude": -122.5974294,
+    "stories": [
+      {
+        "title": "Dateline May 1, 2011, Some Time Has Gone By, Whidbey Island",
+        "file": "2011-05-01-dateline-may-1-2011-whidbey-island-washington.md"
+      },
+      {
+        "title": "Dateline July 17, 2013, Washington to the Redwood Forest",
+        "file": "2013-07-27-dateline-july-17-2013-washington-to-the-redwood-forest.md"
+      }
+    ]
+  },
+  {
+    "place": "valdez",
+    "country": "United States",
+    "state": "Alaska",
+    "latitude": 61.1299396,
+    "longitude": -146.349363,
+    "stories": [
+      {
+        "title": "Dateline June 13, 2011, Across Prince William Sound and Down the Kenai",
+        "file": "2011-06-14-dateline-june-13-2011-valdez-to-whittier-to-seward-to-homer.md"
+      }
+    ]
+  },
+  {
+    "place": "seward",
+    "country": "United States",
+    "state": "Alaska",
+    "latitude": 60.1013952,
+    "longitude": -149.4404281,
+    "stories": [
+      {
+        "title": "Dateline June 13, 2011, Across Prince William Sound and Down the Kenai",
+        "file": "2011-06-14-dateline-june-13-2011-valdez-to-whittier-to-seward-to-homer.md"
+      }
+    ]
+  },
+  {
+    "place": "Bergen",
+    "country": "Norway",
+    "state": "Vestland",
+    "latitude": 60.3943055,
+    "longitude": 5.3259192,
+    "stories": [
+      {
+        "title": "Dateline May 8, 2016, The Norwegian Fjords",
+        "file": "2016-05-08-norwegian-fjords.md"
+      }
+    ]
+  }
+]

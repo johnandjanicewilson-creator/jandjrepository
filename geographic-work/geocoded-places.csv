@@ -1,0 +1,7 @@
+place,country,state_province,latitude,longitude,status
+"Bergen","Norway","Vestland",60.3943055,5.3259192,"verified"
+"pearl-harbor","United States","Hawaii",21.3557747,-157.9991492,"matched"
+"akaka-falls","United States","Hawaii",19.8531832,-155.1561224,"matched"
+"whidbey-island","United States","Washington",48.1581426,-122.5974294,"matched"
+"valdez","United States","Alaska",61.1299396,-146.3493630,"matched"
+"seward","United States","Alaska",60.1013952,-149.4404281,"matched"
