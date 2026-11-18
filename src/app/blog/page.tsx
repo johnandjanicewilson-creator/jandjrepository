@@ -7,6 +7,7 @@ import { getBlogPageData, filterPostsFromList } from "@/lib/posts";
 import { getNewPublishedStories } from "@/lib/publishing/getPublishedStory";
 import type { Post } from "@/lib/types";
 import readingTime from "reading-time";
+import approvedFilters from "../../../blog-visible-filters.json";
 
 interface BlogPageProps {
   searchParams: Promise<{
@@ -54,9 +55,13 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     category: params.category,
     tag: params.tag,
   });
-  const destinations = [...new Set(allPosts.map(p => p.destination))].sort();
+  const destinations = [...new Set(allPosts.map(p => p.destination))]
+    .filter(d => approvedFilters.destinations.includes(d))
+    .sort();
   const years = [...new Set(allPosts.map(p => p.year))].sort((a,b) => b-a);
-  const categories = [...new Set(allPosts.flatMap(p => p.categories))].sort();
+  const categories = [...new Set(allPosts.flatMap(p => p.categories))]
+    .filter(c => approvedFilters.categories.includes(c))
+    .sort();
   const tags = [...new Set(allPosts.flatMap(p => p.tags))].sort();
 
   return (

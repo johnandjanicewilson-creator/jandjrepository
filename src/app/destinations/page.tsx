@@ -1,3 +1,4 @@
+import approvedFilters from "../../../blog-visible-filters.json";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
@@ -9,7 +10,9 @@ export const metadata = {
 };
 
 export default function DestinationsPage() {
-  const destinations = getDestinations();
+  const destinations = getDestinations().filter(d =>
+    approvedFilters.destinations.includes(d.name)
+  );
 
   return (
     <Container className="py-12 lg:py-16">
