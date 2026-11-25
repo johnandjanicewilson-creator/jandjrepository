@@ -349,6 +349,7 @@ export default function NewPostPage() {
         const response = await fetch(
           `/api/dashboard/drafts/${cloudDraftId}/writing-autosave`,
           {
+            signal: AbortSignal.timeout(15000),
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -431,6 +432,30 @@ export default function NewPostPage() {
         featuredImageToSave.startsWith("jj-staged:")
       ) {
         throw new Error("PHOTO_UPLOAD_FAILED");
+      }
+
+      if (cloudDraftId) {
+        const permission = await fetch(
+          `/api/dashboard/drafts/${encodeURIComponent(cloudDraftId)}/lock`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(15000),
+            body: JSON.stringify({
+              lockSession: lockSessionRef.current,
+              revision,
+            }),
+          }
+        );
+
+        if (permission.status === 409) {
+          setEditLockHeld(false);
+          throw new Error("EDIT_CONFLICT");
+        }
+
+        if (!permission.ok) {
+          throw new Error("Unable to renew editing permission");
+        }
       }
 
       const url = cloudDraftId
@@ -525,7 +550,8 @@ export default function NewPostPage() {
   useEffect(() => {
     if (!cloudDraftId || !loaded || revision === null || !previouslyAuthorizedRef.current) return;
 
-    const timer = window.setInterval(async () => {
+    const renewLock = async () => {
+      if (!navigator.onLine) return;
       if (lockRenewalRef.current || finishingRef.current || cancellingRef.current || savingRef.current) return;
       lockRenewalRef.current = true;
 
@@ -535,6 +561,7 @@ export default function NewPostPage() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(15000),
             body: JSON.stringify({ lockSession: lockSessionRef.current, revision }),
           }
         );
@@ -555,9 +582,15 @@ export default function NewPostPage() {
       } finally {
         lockRenewalRef.current = false;
       }
-    }, 120000);
+    };
 
-    return () => window.clearInterval(timer);
+    const timer = window.setInterval(renewLock, 120000);
+    window.addEventListener("online", renewLock);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("online", renewLock);
+    };
   }, [cloudDraftId, loaded, revision]);
 
   useEffect(() => {
