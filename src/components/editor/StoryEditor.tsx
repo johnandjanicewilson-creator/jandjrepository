@@ -97,7 +97,7 @@ export default function StoryEditor({
 
   useEffect(() => {
     if (!editor) return;
-    editor.setEditable(!disabled);
+    editor.setEditable(!disabled, false);
   }, [editor, disabled]);
   const insertGallery = () => {
     if (!editor) return;
