@@ -13,15 +13,25 @@ export default async function ExistingStoryPage({
 }) {
   const { slug } = await params;
   const post = getPostBySlug(slug);
+  const published = await getPublishedStory(slug);
 
-  if (!post) {
+  if (!post && !published) {
     notFound();
   }
 
-  const published = await getPublishedStory(slug);
+  const meta = (published?.original_metadata ?? {}) as Record<string, unknown>;
+  const title = published ? String(published.title) : post!.title;
+  const date = post?.date ?? (
+    typeof meta.date === "string" ? meta.date :
+    new Date(published!.published_at as string).toISOString().slice(0, 10)
+  );
+  const destination = post?.destination ?? (
+    typeof meta.destination === "string" ? meta.destination : "Travel"
+  );
+
   const storyHtml = published
     ? String(published.content)
-    : await markdownToHtml(post.content);
+    : await markdownToHtml(post!.content);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
@@ -29,10 +39,10 @@ export default async function ExistingStoryPage({
         Back to Story Search
       </Link>
 
-      <h1 className="mt-6 text-3xl font-bold">{post.title}</h1>
+      <h1 className="mt-6 text-3xl font-bold">{title}</h1>
 
       <p className="mt-3 text-gray-600">
-        {String(post.date)} — {post.destination}
+        {String(date)} — {destination}
       </p>
 
       <p className="mt-6 font-semibold">
