@@ -36,64 +36,20 @@ export async function POST(
 
     const sql = getDatabase();
 
-    const newlyCreated = await sql`
-      DELETE FROM travel_drafts
-      WHERE id = ${id}
-        AND locked_by = ${user}
-        AND lock_session = ${lockSession}
-        AND lock_expires_at > NOW()
-        AND revision = ${revision}
-        AND original_metadata->>'_createdInEditSession' = ${lockSession}
-        AND source_slug IS NULL
-        AND NOT EXISTS (
-          SELECT 1 FROM travel_published
-          WHERE source_draft_id = ${id}
-        )
-      RETURNING id
-    `;
-
-    if (newlyCreated.length > 0) {
-      return NextResponse.json({ cancelled: true, discardedNewDraft: true });
-    }
-
     const rows = await sql`
       UPDATE travel_drafts
-      SET title = original_metadata->'_editSnapshot'->>'title',
-          content = original_metadata->'_editSnapshot'->>'story',
-          travel_date = NULLIF(original_metadata->'_editSnapshot'->>'date', '')::date,
-          destination = original_metadata->'_editSnapshot'->>'destination',
-          original_metadata = jsonb_set(
-            jsonb_set(
-              jsonb_set(
-                jsonb_set(
-                  original_metadata - '_editSnapshot' - '_writingAutosave',
-                  '{series}',
-                  to_jsonb(COALESCE(original_metadata->'_editSnapshot'->>'series', '')::text)
-                ),
-                '{excerpt}',
-                to_jsonb(COALESCE(original_metadata->'_editSnapshot'->>'excerpt', '')::text)
-              ),
-              '{featuredImage}',
-              to_jsonb(COALESCE(original_metadata->'_editSnapshot'->>'featuredImage', '')::text)
-            ),
-            '{featuredImageAlt}',
-            to_jsonb(COALESCE(original_metadata->'_editSnapshot'->>'featuredImageAlt', '')::text)
-          ),
-          updated_at = NOW(),
-          revision = revision + 1,
+      SET original_metadata =
+            COALESCE(original_metadata, '{}'::jsonb)
+            - '_editSnapshot'
+            - '_writingAutosave'
+            - '_createdInEditSession',
           locked_by = NULL,
           lock_session = NULL,
           lock_expires_at = NULL
       WHERE id = ${id}
         AND locked_by = ${user}
         AND lock_session = ${lockSession}
-        AND lock_expires_at > NOW()
         AND revision = ${revision}
-        AND original_metadata->'_editSnapshot'->>'session' = ${lockSession}
-        AND jsonb_typeof(original_metadata->'_editSnapshot') = 'object'
-        AND original_metadata->'_editSnapshot' ? 'title'
-        AND original_metadata->'_editSnapshot' ? 'story'
-        AND original_metadata->'_editSnapshot' ? 'destination'
       RETURNING id
     `;
 

@@ -7,6 +7,7 @@ import { commitStagedPhoto } from "@/lib/dashboard/uploads/commitStagedPhoto";
 import { useEffect, useRef, useState } from "react";
 import { getDraft, saveDraft } from "@/lib/dashboard/drafts";
 import { stagePhoto } from "@/lib/dashboard/uploads/stagePhoto";
+import { CloudinaryPhotoPicker } from "@/components/editor/CloudinaryPhotoPicker";
 import { StagedPhotoImage } from "@/components/editor/StagedPhotoImage";
 import StoryEditor from "@/components/editor/StoryEditor";
 
@@ -33,6 +34,7 @@ export default function NewPostPage() {
   const [journeysLoadError, setJourneysLoadError] = useState(false);
   const [featuredImage, setFeaturedImage] = useState("");
   const [featuredImageAlt, setFeaturedImageAlt] = useState("");
+  const [featuredCloudinaryOpen, setFeaturedCloudinaryOpen] = useState(false);
   const [featuredPhotoUploading, setFeaturedPhotoUploading] = useState(false);
   const [excerpt, setExcerpt] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -80,8 +82,10 @@ export default function NewPostPage() {
   const cancellingRef = useRef(false);
   const savingRef = useRef(false);
   const lockRenewalRef = useRef(false);
+  const previouslyAuthorizedRef = useRef(false);
   const finishingRef = useRef(false);
   const [changesMade, setChangesMade] = useState(false);
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const editVersionRef = useRef(0);
   const [recoveryAvailable, setRecoveryAvailable] = useState(false);
   const [recoverySource, setRecoverySource] = useState<"browser" | "neon" | null>(null);
@@ -94,6 +98,7 @@ export default function NewPostPage() {
     excerpt?: string;
     featuredImage?: string;
     featuredImageAlt?: string;
+    baseRevision?: number | null;
     backedUpAt: string;
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -200,10 +205,10 @@ export default function NewPostPage() {
     }
   }
 
-  async function handleCancelEditing() {
+  async function handleCancelEditing(alreadyConfirmed = false) {
     if (cancellingRef.current || finishingRef.current) return;
 
-    if (!window.confirm("Discard all changes made during this editing session?")) {
+    if (!alreadyConfirmed && !window.confirm("Discard changes since your last Save Draft?")) {
       return;
     }
 
@@ -227,7 +232,7 @@ export default function NewPostPage() {
         } catch {
           // Browser storage may be unavailable.
         }
-        window.location.assign("/dashboard/drafts");
+        window.location.assign("/dashboard");
         return;
       }
 
@@ -262,7 +267,7 @@ export default function NewPostPage() {
 
       sessionStorage.removeItem(`jj-edit-session-${cloudDraftId}`);
       setEditLockHeld(false);
-      window.location.assign("/dashboard/drafts");
+      window.location.assign("/dashboard");
     } catch {
       setMessage("Could not contact Neon. No cancellation was confirmed.");
     } finally {
@@ -270,72 +275,107 @@ export default function NewPostPage() {
     }
   }
 
-  async function handleFinishEditing() {
+  async function releaseLockAndExit(id: string | null) {
     if (finishingRef.current) return;
-
-    if (!loaded || !cloudDraftId || !editLockHeld || !lockSessionRef.current) {
-      setMessage("There is no active editing session to finish.");
-      return;
-    }
-
-    if (featuredPhotoUploading) {
-      setMessage("Please wait for the featured photograph to finish uploading.");
-      return;
-    }
-
-    if (hasStagedPhotos()) {
-      setMessage("You have photographs waiting to be saved. Click Save Photos before closing the editor.");
-      return;
-    }
-
-    if (savingRef.current || changesMade || recoveryAvailable) {
-      setMessage("Please save your changes successfully before finishing editing.");
-      return;
-    }
-
-    if (lockRenewalRef.current) {
-      setMessage("The editing lock is being renewed. Please try Save & Close Editor again in a moment.");
-      return;
-    }
-
     finishingRef.current = true;
 
     try {
-      const response = await fetch(
-        `/api/dashboard/drafts/${encodeURIComponent(cloudDraftId)}/lock`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lockSession: lockSessionRef.current }),
-        }
-      );
+      if (id) {
+        const response = await fetch(
+          `/api/dashboard/drafts/${encodeURIComponent(id)}/lock`,
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              lockSession: lockSessionRef.current
+            })
+          }
+        );
 
-      if (!response.ok) {
-        setMessage("Could not release the editing lock. Please try again.");
-        return;
+        if (!response.ok) {
+          setMessage("Could not release the editing lock. Please try Exit again.");
+          return;
+        }
+
+        sessionStorage.removeItem(`jj-edit-session-${id}`);
       }
 
-      sessionStorage.removeItem(`jj-edit-session-${cloudDraftId}`);
-      setEditLockHeld(false);
-      window.location.assign("/dashboard/drafts");
+      window.location.assign("/dashboard");
     } catch {
-      setMessage("Could not contact the server to finish editing. Please try again.");
+      setMessage("Could not complete Exit. Please try again.");
     } finally {
       finishingRef.current = false;
     }
   }
 
-  async function handleSavePhotos() {
-    if (!hasStagedPhotos()) {
-      setMessage("There are no new photographs waiting to be saved.");
+  async function handleFinishEditing() {
+    if (!loaded || finishingRef.current || cancellingRef.current) return;
+
+    if (savingRef.current || lockRenewalRef.current || featuredPhotoUploading) {
+      setMessage("An operation is still running. Please try Exit again.");
       return;
     }
 
-    await handleSaveDraft("photos");
+    if (recoveryAvailable) {
+      setMessage("Please resolve the recovery backup before exiting.");
+      return;
+    }
+
+    if (changesMade || hasStagedPhotos()) {
+      setExitDialogOpen(true);
+      return;
+    }
+
+    await releaseLockAndExit(cloudDraftId);
   }
 
   async function handleSaveDraft(mode: "manual" | "automatic" | "photos" = "manual") {
-    if (cancellingRef.current) return;
+    if (cancellingRef.current || finishingRef.current) return;
+    if (lockRenewalRef.current) {
+      if (mode !== "automatic") {
+        setMessage("Please try Save Draft again in a moment.");
+      }
+      return;
+    }
+    if (mode === "automatic") {
+      if (!cloudDraftId || revision === null || !editLockHeld) {
+        return;
+      }
+
+      if (savingRef.current) return;
+      savingRef.current = true;
+
+      try {
+        const response = await fetch(
+          `/api/dashboard/drafts/${cloudDraftId}/writing-autosave`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title,
+              story,
+              date,
+              destination,
+              series,
+              excerpt,
+              featuredImage,
+              featuredImageAlt,
+              revision,
+              lockSession: lockSessionRef.current,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Writing autosave failed");
+
+      } catch {
+        // Retain browser recovery and retry on the next backup cycle.
+      } finally {
+        savingRef.current = false;
+      }
+      return;
+    }
+
     if (featuredPhotoUploading) {
       setMessage("Please wait for the featured photograph to finish uploading.");
       return;
@@ -366,58 +406,18 @@ export default function NewPostPage() {
       return;
     }
 
-    if ((mode === "automatic" && hasPendingPhotoChanges()) || (mode === "manual" && hasStagedPhotos())) {
-      if (!cloudDraftId || revision === null || !editLockHeld) {
-        setMessage("Your work is backed up in this browser, but has not been saved to Neon. Click Save Photos to upload your selected photographs and save the draft before closing.");
-        return;
-      }
-
-      if (savingRef.current) return;
-      savingRef.current = true;
-
-      try {
-        const response = await fetch(
-          `/api/dashboard/drafts/${cloudDraftId}/writing-autosave`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title,
-              story,
-              date,
-              destination,
-              series,
-              excerpt,
-              featuredImage,
-              featuredImageAlt,
-              revision,
-              lockSession: lockSessionRef.current,
-            }),
-          }
-        );
-
-        if (!response.ok) throw new Error("Writing autosave failed");
-
-        setMessage("Writing recovery copy saved to Neon. Photograph changes remain uncommitted.");
-      } catch {
-        setMessage("Writing recovery copy not saved to Neon. Your browser backup remains available.");
-      } finally {
-        savingRef.current = false;
-      }
-      return;
-    }
 
     if (savingRef.current) return;
     savingRef.current = true;
 
     const versionBeingSaved = editVersionRef.current;
-    setMessage("Saving to Neon...");
+    setMessage("");
 
     try {
       let storyToSave = story;
       let featuredImageToSave = featuredImage;
 
-      if (mode === "photos") {
+      if (mode === "photos" || mode === "manual") {
         try {
           storyToSave = await prepareStoryPhotos(story);
           featuredImageToSave = await commitStagedPhoto(featuredImage);
@@ -465,7 +465,26 @@ export default function NewPostPage() {
       }
       setCloudDraftId(result.id);
       if (!cloudDraftId) {
+        previouslyAuthorizedRef.current = true;
         setEditLockHeld(true);
+
+        try {
+          if (lockSessionRef.current) {
+            sessionStorage.setItem(
+              `jj-edit-session-${result.id}`,
+              lockSessionRef.current
+            );
+          }
+        } catch {
+          // Browser session storage may be unavailable.
+        }
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete("draft");
+        url.searchParams.set("cloud", result.id);
+        window.history.replaceState(
+          window.history.state, "", url.toString()
+        );
       }
       if (Number.isSafeInteger(result.revision)) {
         setRevision(result.revision);
@@ -482,7 +501,8 @@ export default function NewPostPage() {
           // Browser storage may be unavailable.
         }
         setChangesMade(false);
-        setMessage(`Saved to Neon at ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.`);
+        setMessage("");
+        return result.id as string;
       } else {
         setChangesMade(true);
         setMessage("Newer changes are waiting to be saved.");
@@ -492,10 +512,10 @@ export default function NewPostPage() {
       if (error instanceof Error && error.message === "EDIT_CONFLICT") {
         setMessage("Save blocked: this story may have changed or its editing lock expired. Your writing remains on this page. Do not close it.");
       } else if (error instanceof Error && error.message === "PHOTO_UPLOAD_FAILED") {
-        setMessage("A photograph could not be uploaded. Nothing was saved to Neon. Your staged photographs remain in Firefox. Please try Save Photos again.");
+        setMessage("A photograph could not be uploaded. Nothing was saved to Neon. Your staged photographs remain in Firefox. Please try Save Draft again.");
       } else {
         setRetryCount((count) => count + 1);
-        setMessage("Not saved to Neon — connection problem. Keep this page open. We will try again automatically.");
+        setMessage("Save failed. Your work remains in the editor. Please try Save Draft again.");
       }
     } finally {
       savingRef.current = false;
@@ -503,10 +523,10 @@ export default function NewPostPage() {
   }
 
   useEffect(() => {
-    if (!cloudDraftId || !editLockHeld) return;
+    if (!cloudDraftId || !loaded || revision === null || !previouslyAuthorizedRef.current) return;
 
     const timer = window.setInterval(async () => {
-      if (lockRenewalRef.current || finishingRef.current || cancellingRef.current) return;
+      if (lockRenewalRef.current || finishingRef.current || cancellingRef.current || savingRef.current) return;
       lockRenewalRef.current = true;
 
       try {
@@ -515,23 +535,30 @@ export default function NewPostPage() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lockSession: lockSessionRef.current }),
+            body: JSON.stringify({ lockSession: lockSessionRef.current, revision }),
           }
         );
-        if (!response.ok) {
+        if (response.status === 409) {
           setEditLockHeld(false);
-          setMessage("Editing lock lost. Please do not close this page.");
+          setMessage("Another editing session holds this story. Your unsaved work is preserved in the editor.");
+        } else if (response.ok) {
+          const result = await response.json();
+          if (result.lock.revision !== revision && !savingRef.current) {
+            setEditLockHeld(false);
+            setMessage("The saved story has changed in another session. Your unsaved work is preserved.");
+          } else if (result.lock.revision === revision) {
+            setEditLockHeld(true);
+          }
         }
       } catch {
-        setEditLockHeld(false);
-        setMessage("Could not renew editing lock. Please do not close this page.");
+        // Temporary connection failure. Keep editing and retry renewal.
       } finally {
         lockRenewalRef.current = false;
       }
     }, 120000);
 
     return () => window.clearInterval(timer);
-  }, [cloudDraftId, editLockHeld]);
+  }, [cloudDraftId, loaded, revision]);
 
   useEffect(() => {
     try {
@@ -568,6 +595,7 @@ export default function NewPostPage() {
               setEditLockHeld(false);
               setMessage("Read-only: this story is being edited in another session.");
             } else {
+              previouslyAuthorizedRef.current = true;
               setEditLockHeld(true);
             }
             return fetch(`/api/dashboard/drafts/${encodeURIComponent(cloudId)}`, {
@@ -626,6 +654,7 @@ setCreatingJourney(false);
                 excerpt: recovery.excerpt ?? "",
                 featuredImage: recovery.featuredImage ?? "",
                 featuredImageAlt: recovery.featuredImageAlt ?? "",
+                baseRevision: recovery.baseRevision,
                 backedUpAt: recovery.backedUpAt,
               });
               setRecoverySource("neon");
@@ -672,7 +701,7 @@ setCreatingJourney(false);
   }, []);
 
   useEffect(() => {
-    if (!loaded || changesMade || recoveryAvailable) return;
+    if (!loaded || changesMade) return;
 
     try {
       const backupKey = `jj-travel-backup-${cloudDraftId || "new"}`;
@@ -702,10 +731,15 @@ setCreatingJourney(false);
         (typeof backup.featuredImageAlt === "string" &&
          backup.featuredImageAlt !== featuredImageAlt);
 
-      if (differs) {
+      if (
+        differs &&
+        (!recoveryDraft ||
+          Date.parse(backup.backedUpAt) >
+          Date.parse(recoveryDraft.backedUpAt))
+      ) {
         setRecoveryDraft(backup);
         setRecoverySource("browser");
-      setRecoveryAvailable(true);
+        setRecoveryAvailable(true);
       }
     } catch {
       // Ignore unavailable or damaged browser backups.
@@ -727,23 +761,32 @@ setCreatingJourney(false);
           excerpt,
           featuredImage,
           featuredImageAlt,
+          baseRevision: revision,
           backedUpAt: new Date().toISOString()
         })
       );
     } catch {
       // Browser storage may be unavailable.
     }
-  }, [title, story, date, destination, series, excerpt, featuredImage, featuredImageAlt, loaded, cloudDraftId]);
+  }, [title, story, date, destination, series, excerpt, featuredImage, featuredImageAlt, loaded, cloudDraftId, revision, changesMade, recoveryAvailable]);
+
+  const automaticBackupRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    if (!loaded || !changesMade || recoveryAvailable || cancellingRef.current) return;
-
-    const timer = setTimeout(() => {
+    automaticBackupRef.current = () => {
+      if (!loaded || !changesMade || recoveryAvailable ||
+          cancellingRef.current || featuredPhotoUploading) return;
       void handleSaveDraft("automatic");
+    };
+  });
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      automaticBackupRef.current();
     }, 30000);
 
-    return () => clearTimeout(timer);
-  }, [loaded, changesMade, title, story, date, destination, series, excerpt, featuredImage, featuredImageAlt, featuredPhotoUploading, retryCount, recoveryAvailable]);
+    return () => window.clearInterval(timer);
+  }, []);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
@@ -761,11 +804,9 @@ setCreatingJourney(false);
           role="alert"
           className="mt-6 rounded-lg border-2 border-amber-500 bg-amber-50 p-5 text-gray-900"
         >
-          <h2 className="text-lg font-bold">Unsaved {recoverySource === "neon" ? "Neon Recovery" : "Browser"} Copy Found</h2>
+          <h2 className="text-lg font-bold">Unsaved Work Found</h2>
           <p className="mt-2">
-            {recoverySource === "neon"
-              ? "Neon has a recovery copy containing unfinished writing or photograph changes. These changes have not been committed to the story."
-              : "Firefox has a different copy of this story. It may contain writing that was not saved to Neon."}
+            An automatic recovery backup contains changes that have not been deliberately saved.
           </p>
           <p className="mt-2 text-sm">
             We will let you choose which version to keep.
@@ -776,6 +817,24 @@ setCreatingJourney(false);
             className="mt-4 rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white"
             onClick={() => {
               if (!recoveryDraft) return;
+
+              if (cloudDraftId && !editLockHeld) {
+                setMessage("This story is not available for editing yet.");
+                return;
+              }
+
+              if (cloudDraftId &&
+                  recoveryDraft.baseRevision !== revision) {
+                const confirmed = window.confirm(
+                  "This recovery copy may be older than the saved story. " +
+                  "Recovering it will replace the contents in the editor, " +
+                  "but will not change the saved story until you click Save Draft. " +
+                  "Do you want to recover it?"
+                );
+
+                if (!confirmed) return;
+              }
+
               setTitle(recoveryDraft.title);
               setStory(recoveryDraft.story);
               setDate(recoveryDraft.date);
@@ -794,15 +853,15 @@ setCreatingJourney(false);
               setMessage(`${recoveredFrom} recovery copy restored. Use Save Draft to keep these changes.`);
             }}
           >
-            Recover {recoverySource === "neon" ? "Neon" : "Browser"} Copy
+            Recover My Work
           </button>
           <button
             type="button"
             className="ml-3 mt-4 rounded-lg border border-gray-500 px-4 py-2 font-semibold"
             onClick={async () => {
-              if (recoverySource === "neon") {
-                if (!cloudDraftId || revision === null || !editLockHeld) {
-                  setMessage("Cannot discard Neon recovery without an active editing lock.");
+              if (cloudDraftId) {
+                if (revision === null || !editLockHeld) {
+                  setMessage("Editing permission is required to discard unsaved changes.");
                   return;
                 }
 
@@ -820,36 +879,28 @@ setCreatingJourney(false);
                   );
 
                   if (!response.ok) throw new Error("Recovery cleanup failed");
-
-                  setRecoveryAvailable(false);
-                  setRecoveryDraft(null);
-                  setRecoverySource(null);
-                  setMessage("Keeping the saved Neon story. Unfinished Neon recovery was discarded.");
                 } catch {
-                  setMessage("Could not discard Neon recovery. Please try again.");
+                  setMessage("Could not discard unsaved changes. Please try again.");
+                  return;
                 }
-                return;
               }
 
               try {
-                const backupKey = `jj-travel-backup-${cloudDraftId || "new"}`;
-                const oldBackup = localStorage.getItem(backupKey);
-                if (oldBackup) {
-                  const archiveKey = `jj-travel-archive-${crypto.randomUUID()}`;
-                  localStorage.setItem(archiveKey, oldBackup);
-                  localStorage.removeItem(backupKey);
-                }
+                localStorage.removeItem(
+                  `jj-travel-backup-${cloudDraftId || "new"}`
+                );
               } catch {
-                setMessage("Could not archive the browser copy. Please try again.");
+                setMessage("Could not remove the browser recovery backup. Please try again.");
                 return;
               }
+
               setRecoveryAvailable(false);
               setRecoveryDraft(null);
               setRecoverySource(null);
-              setMessage("Keeping the Neon version. The browser copy was archived.");
+              setMessage("");
             }}
           >
-            Keep Neon Version
+            Discard Unsaved Changes
           </button>
         </div>
       )}
@@ -994,6 +1045,30 @@ setCreatingJourney(false);
         <p className="mt-1 text-sm text-gray-600">
           Choose the main photograph for this travel story.
         </p>
+        <p className="mt-2 text-sm font-semibold">My Computer</p>
+        <button
+          type="button"
+          disabled={featuredPhotoUploading || recoveryAvailable || (cloudDraftId !== null && !editLockHeld)}
+          onClick={() => setFeaturedCloudinaryOpen(true)}
+          className="mt-2 rounded border px-4 py-2 hover:bg-gray-100 disabled:opacity-40"
+        >
+          Choose from Cloudinary
+        </button>
+
+        {featuredCloudinaryOpen && (
+          <CloudinaryPhotoPicker
+            onClose={() => setFeaturedCloudinaryOpen(false)}
+            onSelect={(url) => {
+              if (!recoveryAvailable && (cloudDraftId === null || editLockHeld)) {
+                setFeaturedImage(url);
+                setFeaturedImageAlt("");
+                editVersionRef.current += 1;
+                setChangesMade(true);
+              }
+              setFeaturedCloudinaryOpen(false);
+            }}
+          />
+        )}
         <input
           id="featured-photo"
           type="file"
@@ -1084,15 +1159,7 @@ setCreatingJourney(false);
         Save Draft
       </button>
 
-      <button
-        type="button"
-        onClick={() => void handleSavePhotos()}
-        disabled={!loaded || recoveryAvailable || !hasStagedPhotos() ||
-          (cloudDraftId !== null && !editLockHeld)}
-        className="ml-3 mt-6 rounded-lg bg-indigo-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Save Photos
-      </button>
+
 
       <button
         type="button"
@@ -1103,24 +1170,56 @@ setCreatingJourney(false);
         Preview Story
       </button>
 
-      {cloudDraftId && editLockHeld && (
-        <button
-          type="button"
-          onClick={handleFinishEditing}
-          disabled={!loaded || changesMade || recoveryAvailable || savingRef.current || hasStagedPhotos()}
-          className="ml-3 mt-6 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Save & Close Editor
-        </button>
+      <button
+        type="button"
+        onClick={() => void handleFinishEditing()}
+        disabled={!loaded || recoveryAvailable}
+        className="ml-3 mt-6 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white disabled:opacity-50"
+      >
+        Exit
+      </button>
+
+      {exitDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div role="dialog" aria-modal="true"
+            aria-labelledby="exit-heading"
+            className="rounded-lg bg-white p-6 text-gray-900 shadow-xl">
+            <h2 id="exit-heading" className="text-xl font-bold">
+              You have unsaved changes.
+            </h2>
+            <p className="mt-3">Save your changes before exiting?</p>
+            <button
+              type="button"
+              className="mt-5 rounded-lg bg-green-800 px-6 py-3 text-white"
+              onClick={async () => {
+                setExitDialogOpen(false);
+                const id = await handleSaveDraft("manual");
+                if (id) await releaseLockAndExit(id);
+              }}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              className="ml-3 mt-5 rounded-lg border border-red-700 px-6 py-3 text-red-800"
+              onClick={() => {
+                setExitDialogOpen(false);
+                void handleCancelEditing(true);
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {loaded && (
         <button
           type="button"
-          onClick={handleCancelEditing}
+          onClick={() => void handleCancelEditing()}
           className="ml-3 mt-6 rounded-lg border border-red-700 px-6 py-3 font-semibold text-red-800"
         >
-          Cancel Without Saving
+          Cancel
         </button>
       )}
 
@@ -1138,14 +1237,14 @@ setCreatingJourney(false);
           }
           className="ml-3 mt-6 rounded-lg bg-amber-700 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Publish Story
+          Publish
         </button>
       )}
 
       {message && <p role="status" className="mt-3">{message}</p>}
 
       <p className="mt-4 text-sm">
-        Your changes are automatically saved to Neon while you write. Publishing requires your confirmation.
+        Save Draft saves your work. Publishing requires your confirmation.
       </p>
     </main>
   );

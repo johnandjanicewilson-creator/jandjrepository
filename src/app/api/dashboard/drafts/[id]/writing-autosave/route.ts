@@ -30,7 +30,7 @@ export async function PUT(
       typeof title !== "string" || title.length > 300 ||
       typeof story !== "string" || story.length > 500000 ||
       typeof date !== "string" ||
-      (date !== "" && !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) ||
+      (date !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(date)) ||
       typeof destination !== "string" || destination.length > 300 ||
       typeof series !== "string" || series.length > 300 ||
       typeof excerpt !== "string" || excerpt.length > 1000 ||
@@ -60,6 +60,7 @@ export async function PUT(
               'excerpt', ${excerpt}::text,
               'featuredImage', ${featuredImage}::text,
               'featuredImageAlt', ${featuredImageAlt}::text,
+              'baseRevision', ${revision}::integer,
               'backedUpAt', NOW()
             )
           ),

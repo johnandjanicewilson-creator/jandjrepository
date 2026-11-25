@@ -22,6 +22,17 @@ export async function POST(
   try {
     const data = await request.json();
     const lockSession = data?.lockSession;
+    const expectedRevision = data?.revision ?? null;
+
+    if (
+      expectedRevision !== null &&
+      !Number.isInteger(expectedRevision)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid revision" },
+        { status: 400 }
+      );
+    }
 
     if (
       typeof lockSession !== "string" ||
@@ -60,6 +71,8 @@ export async function POST(
           lock_session = ${lockSession},
           lock_expires_at = NOW() + INTERVAL '5 minutes'
       WHERE id = ${id}
+        AND (${expectedRevision}::integer IS NULL
+             OR revision = ${expectedRevision}::integer)
         AND (
           locked_by IS NULL
           OR lock_expires_at IS NULL

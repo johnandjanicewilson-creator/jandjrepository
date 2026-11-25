@@ -28,6 +28,7 @@ import { PhotoGallery } from "./PhotoGallery";
 import { PhotoLocationMarker } from "./PhotoLocationMarker";
 import { stagePhoto } from "@/lib/dashboard/uploads/stagePhoto";
 import { InsetText } from "./InsetText";
+import { CloudinaryPhotoPicker } from "./CloudinaryPhotoPicker";
 
 type StoryEditorProps = {
   value: string;
@@ -40,6 +41,12 @@ export default function StoryEditor({
   onChange,
   disabled = false,
 }: StoryEditorProps) {
+  const [cloudinaryGalleryPosition, setCloudinaryGalleryPosition] =
+    useState<number | null>(null);
+
+  const [cloudinaryPhotoPosition, setCloudinaryPhotoPosition] =
+    useState<number | null>(null);
+
   const [galleryPhotoSelections, setGalleryPhotoSelections] = useState<
     { position: number; src: string }[]
   >([]);
@@ -511,6 +518,19 @@ export default function StoryEditor({
           className="story-tool rounded border p-2 hover:bg-gray-100"
         >
           <ImagePlus size={18} aria-label="Insert Photo" />
+          <span className="ml-1">My Computer</span>
+        </button>
+        <button
+          type="button"
+          data-tooltip="Select an existing Cloudinary photograph"
+          disabled={!editor || disabled}
+          onClick={() => {
+            if (!editor || !editor.isEditable) return;
+            setCloudinaryPhotoPosition(editor.state.selection.from);
+          }}
+          className="story-tool rounded border px-3 py-2 hover:bg-gray-100 disabled:opacity-40"
+        >
+          Cloudinary
         </button>
         <button
           type="button"
@@ -520,6 +540,18 @@ export default function StoryEditor({
           className="story-tool rounded border px-3 py-2 hover:bg-gray-100 disabled:opacity-40"
         >
           Insert Gallery
+        </button>
+        <button
+          type="button"
+          data-tooltip="Create a gallery from Cloudinary photographs"
+          disabled={!editor || disabled}
+          onClick={() => {
+            if (!editor || !editor.isEditable) return;
+            setCloudinaryGalleryPosition(editor.state.selection.from);
+          }}
+          className="story-tool rounded border px-3 py-2 hover:bg-gray-100 disabled:opacity-40"
+        >
+          Cloudinary Gallery
         </button>
         {photoSelected && (["small", "medium", "large", "full"] as const).map((size) => (
           <button
@@ -679,6 +711,44 @@ export default function StoryEditor({
               </div>
       </div>
       <EditorContent editor={editor} />
+
+      {cloudinaryGalleryPosition !== null && (
+        <CloudinaryPhotoPicker
+          onClose={() => setCloudinaryGalleryPosition(null)}
+          onSelect={() => {}}
+          onSelectMultiple={(urls) => {
+            if (editor && editor.isEditable && !disabled) {
+              editor.chain().focus()
+                .insertContentAt(cloudinaryGalleryPosition, {
+                  type: "photoGallery",
+                  attrs: {
+                    photos: urls.map(url => ({ src: url, alt: "" })),
+                    caption: "",
+                  },
+                })
+                .run();
+            }
+            setCloudinaryGalleryPosition(null);
+          }}
+        />
+      )}
+
+      {cloudinaryPhotoPosition !== null && (
+        <CloudinaryPhotoPicker
+          onClose={() => setCloudinaryPhotoPosition(null)}
+          onSelect={(url) => {
+            if (editor && editor.isEditable && !disabled) {
+              editor.chain().focus()
+                .insertContentAt(cloudinaryPhotoPosition, {
+                  type: "image",
+                  attrs: { src: url, alt: "" },
+                })
+                .run();
+            }
+            setCloudinaryPhotoPosition(null);
+          }}
+        />
+      )}
     </div>
   );
 }
