@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { openStoryEditor } from "@/lib/dashboard/openStoryEditor";
 
 export default function EditStoryButton({ slug }: { slug: string }) {
   const [opening, setOpening] = useState(false);
@@ -23,11 +24,9 @@ export default function EditStoryButton({ slug }: { slug: string }) {
       const data = await response.json();
       if (typeof data.id !== "string") throw new Error("Missing draft ID");
 
-      window.location.assign(
-        `/dashboard/new?cloud=${encodeURIComponent(data.id)}`
-      );
-    } catch {
-      setError("Could not open the story. Please try again.");
+      await openStoryEditor(data.id);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not open the story. Please try again.");
       setOpening(false);
     }
   }

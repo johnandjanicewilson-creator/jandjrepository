@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { openStoryEditor } from "@/lib/dashboard/openStoryEditor";
 
 type Draft = {
   id: string;
@@ -15,6 +15,24 @@ export default function SavedDraftsPage() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [opening, setOpening] = useState<string | null>(null);
+  const [openError, setOpenError] = useState<{ id: string; message: string } | null>(null);
+
+  async function continueWriting(id: string) {
+    if (opening) return;
+    setOpening(id);
+    setOpenError(null);
+
+    try {
+      await openStoryEditor(id);
+    } catch (error) {
+      setOpenError({
+        id,
+        message: error instanceof Error ? error.message : "Could not open the story. Please try again."
+      });
+      setOpening(null);
+    }
+  }
 
   useEffect(() => {
     async function loadDrafts() {
@@ -89,12 +107,19 @@ export default function SavedDraftsPage() {
                 <p className="mt-3 text-sm">
                   Saved: {new Date(draft.updated_at).toLocaleString()}
                 </p>
-                <Link
-                  href={`/dashboard/new?cloud=${encodeURIComponent(draft.id)}`}
-                  className="mt-4 inline-block underline"
+                <button
+                  type="button"
+                  onClick={() => void continueWriting(draft.id)}
+                  disabled={opening !== null}
+                  className="mt-4 inline-block underline disabled:opacity-50"
                 >
-                  Continue Writing
-                </Link>
+                  {opening === draft.id ? "Opening Editor..." : "Continue Writing"}
+                </button>
+                {openError?.id === draft.id && (
+                  <p role="alert" className="mt-2 text-red-700">
+                    {openError.message}
+                  </p>
+                )}
                 {!draft.published && (
                   <button
                     type="button"
